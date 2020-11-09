@@ -1,0 +1,28 @@
+//Insert yelp nodes
+LOAD CSV WITH HEADERS
+FROM 'FILE:///yelp.csv' AS row
+MERGE
+    (r:Restaurant{id: row.id})
+SET
+    r.alias = row.alias,
+    r.name = row.name,
+    r.url = row.url,
+    r.review_count = row.review_count,
+    r.categories_alias = row.categories_alias,
+    r.categories_title = row.categories_title,
+    r.rating = row.rating,
+    r.latitude = row.coordinates_latitude,
+    r.longitude = row.coordinates_longitude,
+    r.price = row.price,
+    r.address_1 = row.location_address1,
+    r.address_2 = row.location_address2,
+    r.address_3 = row.location_address3,
+    r.city = row.location_city,
+    r.zip_code = row.location_zip_code,
+    r.country = row.location_country,
+    r.state = row.location_state,
+    r.display_address = row.location_display_address,
+    r.phone = row.phone,
+    r.display_phone = row.display_phone
+RETURN
+    count(r) as Restaurant;
