@@ -30,8 +30,8 @@ function run_cypher {
 }
 
 # Copy from data folder
-cp data/yelp.csv "$NEO4J_IMPORT/yelp.csv"
+cp data/yelp_*.csv "$NEO4J_IMPORT/"
 
-# run cypher scripts to import to Neo4J
+# Run cypher scripts to import to Neo4J
 run_cypher 0_init.cyphers
 run_cypher 1_yelp.cyphers
