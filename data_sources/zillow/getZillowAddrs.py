@@ -1,10 +1,11 @@
 #!/usr/bin/env python
-# - This script prints addresses of properties up for sale in San Diego.
-# - Outputs tab-separated rows of address, latitude, and longitude.
-# - All output lines should have an address but some will not have latitude/longitude.
+# - This script prints info of properties up for sale in San Diego meant to be
+#   passed to python-zillow.
+# - Outputs tab-separated rows of address, zip code, latitude, and longitude.
+# - All output lines should have an address/zip but some will not have latitude/longitude.
 # - Requires list of zip codes to search if running as a script.
 #
-# ex: ./getListings.py | sort | uniq >filename.csv
+# ex: ./getZillowAddrs.py | sort | uniq >filename.csv
 #
 import os
 import sys
@@ -201,6 +202,12 @@ def zip_rb(zipcode, prevzip='92111'):
                     continue
 
                 try:
+                    # this often doesn't actually match the input zipcode
+                    returned_zip = jsondata['address']['postalCode']
+                except KeyError: # I haven't observed this
+                    continue
+
+                try:
                     latitude = str(jsondata['geo']['latitude'])
                 except KeyError:
                     latitude = ''
@@ -210,7 +217,7 @@ def zip_rb(zipcode, prevzip='92111'):
                 except KeyError:
                     longitude = ''
 
-                ret.append((address, latitude, longitude))
+                ret.append((address, returned_zip, latitude, longitude))
 
     return ret
 

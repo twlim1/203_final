@@ -1,0 +1,20 @@
+LOAD CSV WITH HEADERS
+FROM 'FILE:///zillow_properties.csv' AS row
+MERGE
+    (p:Property {id: row.id})
+SET
+    p.price = row.price,
+    p.url = row.url,
+    p.latitude = row.latitude,
+    p.longitude = row.longitude,
+    p.street = row.street,
+    p.city = row.city,
+    p.state = row.state,
+    p.zipcode = row.zipcode,
+    p.neighborhood = row.neighborhood,
+    p.bed = row.bed,
+    p.bath = row.bath,
+    p.year_build = row.year_build,
+    p.size = row.size
+RETURN
+    count(p) as Property;
