@@ -5,6 +5,7 @@ CREATE INDEX ON :Review(id);
 // insert Airbnb listings
 CALL apoc.load.json('FILE:///airbnb_listings.json')
 YIELD value
+WHERE value.city = 'San Diego'
 MERGE (r:Rental {id: value.id})
 SET r.property_type_id = value.property_type_id,
     r.tier_id = value.tier_id,
