@@ -48,3 +48,10 @@ MATCH (a:Rental), (b:Review)
 WHERE a.id = b.listing_id
 CREATE (a)-[r:Is_Reviewed]->(b)
 RETURN count(r) as Is_Reviewed;
+
+// connect nearby Airbnb listings
+MATCH (a:Rental), (b:Rental)
+WITH a, b, distance(a.coordinate, b.coordinate) as d
+WHERE d < 1600 AND a.id < b.id
+CREATE (a)-[r:Is_Nearby {distance: d}]->(b)
+RETURN count(r);
