@@ -31,24 +31,20 @@ SET r.property_type_id = value.property_type_id,
     r.rate = value.rate.amount
 RETURN count(r) AS Rental;
 
-// insert Airbnb reviews
+// insert Airbnb reviews and connect to listings
 CALL apoc.load.json('FILE:///airbnb_reviews.json')
 YIELD value
-MERGE (r:Review {id: value.id})
-SET r.listing_id = value.listing_id,
-    r.author_id = value.author_id,
-    r.recipient_id = value.recipient_id,
-    r.rating = value.rating,
-    r.comments = value.comments,
-    r.response = value.response,
-    r.created_at = value.created_at
-RETURN count(r) AS Review;
-
-// connect Airbnb listings and reviews
-MATCH (a:Rental), (b:Review)
-WHERE a.id = b.listing_id
-CREATE (a)-[r:Is_Reviewed]->(b)
-RETURN count(r) as Is_Reviewed;
+MATCH (a:Rental)
+WHERE a.id = value.listing_id
+MERGE (a)-[r:Is_Reviewed]->(b:Review {id: value.id})
+SET b.listing_id = value.listing_id,
+    b.author_id = value.author_id,
+    b.recipient_id = value.recipient_id,
+    b.rating = value.rating,
+    b.comments = value.comments,
+    b.response = value.response,
+    b.created_at = value.created_at
+RETURN count(b) AS Review;
 
 // connect nearby Airbnb listings
 MATCH (a:Rental), (b:Rental)
