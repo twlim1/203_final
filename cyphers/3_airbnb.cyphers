@@ -22,13 +22,13 @@ SET r.property_type_id = value.property_type_id,
     r.is_superhost = value.is_superhost,
     r.is_new_listing = value.is_new_listing,
     r.room_and_property_type = value.room_and_property_type,
+    r.room_type_category = value.room_type_category,
     r.room_type = value.room_type,
     r.space_type = value.space_type,
     r.preview_amenity_names = value.preview_amenity_names,
     r.amenity_ids = value.amenity_ids,
-    r.kicker_content = value.kicker_content.messages,
-    r.wide_kicker_content = value.wide_kicker_content.messages,
-    r.rate = value.rate.amount
+    r.content = value.content,
+    r.rate = value.rate
 RETURN count(r) AS Rental;
 
 // insert Airbnb reviews and connect to listings
