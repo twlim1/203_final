@@ -1,2 +1,30 @@
 // Delete all nodes
 MATCH (n) DETACH DELETE n;
+
+// Delete all constraints and indices
+DROP CONSTRAINT restaurant_yelp_id;
+DROP CONSTRAINT restaurant_google_id;
+
+DROP CONSTRAINT attraction_yelp_id;
+DROP CONSTRAINT attraction_google_id;
+
+DROP CONSTRAINT hotel_yelp_id;
+DROP CONSTRAINT hotel_google_id;
+
+DROP CONSTRAINT review_id;
+DROP INDEX review_yelp_id;
+DROP INDEX review_google_id;
+
+// Create constraints and indices
+CREATE CONSTRAINT restaurant_yelp_id ON (n:Restaurant) ASSERT n.yelp_id IS UNIQUE;
+CREATE CONSTRAINT restaurant_google_id ON (n:Restaurant) ASSERT n.google_id IS UNIQUE;
+
+CREATE CONSTRAINT attraction_yelp_id ON (n:Attraction) ASSERT n.yelp_id IS UNIQUE;
+CREATE CONSTRAINT attraction_google_id ON (n:Attraction) ASSERT n.google_id IS UNIQUE;
+
+CREATE CONSTRAINT hotel_yelp_id ON (n:Hotel) ASSERT n.yelp_id IS UNIQUE;
+CREATE CONSTRAINT hotel_google_id ON (n:Hotel) ASSERT n.google_id IS UNIQUE;
+
+CREATE CONSTRAINT review_id ON (n:Review) ASSERT n.id IS UNIQUE;
+CREATE INDEX review_yelp_id FOR (n:Review) ON (n.yelp_id);
+CREATE INDEX review_google_id FOR (n:Review) ON (n.google_id);

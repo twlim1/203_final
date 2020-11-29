@@ -1,0 +1,322 @@
+// ----------------------------------------------
+// Insert restaurant nodes with Yelp data
+// ----------------------------------------------
+LOAD CSV WITH HEADERS
+FROM 'FILE:///yelp_restaurant.csv' AS row
+MERGE
+    (r:Restaurant{yelp_id: row.id})
+SET
+    //r.alias = row.alias,
+    r.name = row.name,
+    r.yelp_url = row.url,
+    r.yelp_review_count = toInteger(row.review_count),
+    //r.categories_alias = split(row.categories_alias, ','),
+    r.yelp_rating = toFloat(row.rating),
+    r.coordinate = point({longitude: toFloat(row.coordinates_longitude), latitude: toFloat(row.coordinates_latitude)}),
+    r.price = row.price,
+    r.address = coalesce(row.location_address1, '') + coalesce(' ' + row.location_address2, '') + coalesce(' ' + row.location_address3, ''),
+    r.neighborhood = row.neighborhood,
+    r.city = row.location_city,
+    r.county = row.county,
+    r.state = row.location_state,
+    r.zip_code = toInteger(row.location_zip_code),
+    r.country = row.location_country,
+    r.phone = toInteger(row.phone)
+RETURN
+    count(r) as Restaurant_Yelp;
+
+// ----------------------------------------------
+// Update restaurant nodes with matching data
+// ----------------------------------------------
+LOAD CSV WITH HEADERS
+FROM 'FILE:///restaurant_match.csv' AS row
+MERGE
+    (r:Restaurant{yelp_id: row.ltable_id})
+SET
+    r.google_id = row.rtable_place_id
+RETURN
+    count(r) as Restaurant_Match;
+
+// ----------------------------------------------
+// Update restaurant nodes with Google data
+// ----------------------------------------------
+LOAD CSV WITH HEADERS
+FROM 'FILE:///google_restaurant.csv' AS row
+MERGE
+    (r:Restaurant{google_id: row.place_id})
+ON CREATE SET
+    //r.alias =
+    r.name = row.name,
+    r.google_url = row.url,
+    r.google_review_count = toInteger(row.user_ratings_total),
+    //r.categories_alias =
+    r.google_rating = toFloat(row.rating),
+    r.coordinate = point({longitude: toFloat(row.geometry_location_lng), latitude: toFloat(row.geometry_location_lat)}),
+    r.price = toFloat(row.price_level),
+    r.address = row.formatted_address,
+    r.neighborhood = row.neighborhood,
+    r.city = row.city,
+    r.county = row.county,
+    r.state = row.state,
+    r.zip_code = toInteger(row.postal_code),
+    r.country = row.country,
+    r.phone = toInteger(replace(replace(replace(replace(row.formatted_phone_number, '(', ''), ')', ''), '-', ''), ' ', ''))
+ON MATCH SET
+    r.google_url = row.url,
+    r.google_review_count = toInteger(row.user_ratings_total),
+    r.google_rating = toFloat(row.rating)
+RETURN
+    count(r) as Restaurant_Google;
+
+// ----------------------------------------------
+// Insert attraction nodes with Yelp data
+// ----------------------------------------------
+LOAD CSV WITH HEADERS
+FROM 'FILE:///yelp_attraction.csv' AS row
+MERGE
+    (r:Attraction{yelp_id: row.id})
+SET
+    //r.alias = row.alias,
+    r.name = row.name,
+    r.yelp_url = row.url,
+    r.yelp_review_count = toInteger(row.review_count),
+    //r.categories_alias = split(row.categories_alias, ','),
+    r.yelp_rating = toFloat(row.rating),
+    r.coordinate = point({longitude: toFloat(row.coordinates_longitude), latitude: toFloat(row.coordinates_latitude)}),
+    r.price = row.price,
+    r.address = coalesce(row.location_address1, '') + coalesce(' ' + row.location_address2, '') + coalesce(' ' + row.location_address3, ''),
+    r.neighborhood = row.neighborhood,
+    r.city = row.location_city,
+    r.county = row.county,
+    r.state = row.location_state,
+    r.zip_code = toInteger(row.location_zip_code),
+    r.country = row.location_country,
+    r.phone = toInteger(row.phone)
+RETURN
+    count(r) as Attraction_Yelp;
+
+// ----------------------------------------------
+// Insert hotel nodes with Yelp data
+// ----------------------------------------------
+LOAD CSV WITH HEADERS
+FROM 'FILE:///yelp_hotel.csv' AS row
+MERGE
+    (r:Hotel{yelp_id: row.id})
+SET
+    //r.alias = row.alias,
+    r.name = row.name,
+    r.yelp_url = row.url,
+    r.yelp_review_count = toInteger(row.review_count),
+    //r.categories_alias = split(row.categories_alias, ','),
+    r.yelp_rating = toFloat(row.rating),
+    r.coordinate = point({longitude: toFloat(row.coordinates_longitude), latitude: toFloat(row.coordinates_latitude)}),
+    r.price = row.price,
+    r.address = coalesce(row.location_address1, '') + coalesce(' ' + row.location_address2, '') + coalesce(' ' + row.location_address3, ''),
+    r.neighborhood = row.neighborhood,
+    r.city = row.location_city,
+    r.county = row.county,
+    r.state = row.location_state,
+    r.zip_code = toInteger(row.location_zip_code),
+    r.country = row.location_country,
+    r.phone = toInteger(row.phone)
+RETURN
+    count(r) as Hotel_Yelp;
+
+// ----------------------------------------------
+// Insert restaurant review nodes with Yelp data
+// ----------------------------------------------
+LOAD CSV WITH HEADERS
+FROM 'FILE:///yelp_restaurant_review.csv' AS row
+MERGE
+    (r:Review{id: row.id})
+SET
+    r.yelp_id = row.business_id,
+    //r.url = row.url,
+    r.text = row.text,
+    r.rating = toFloat(row.rating),
+    r.time_created = row.time_created,
+    //r.user_id = row.user_id,
+    r.user_profile_url = row.user_profile_url,
+    r.user_image_url = row.user_image_url,
+    r.user_name = row.user_name
+RETURN
+    count(r) as Restaurant_Yelp_Review;
+
+// ----------------------------------------------
+// Insert restaurant review nodes with Google data
+// ----------------------------------------------
+LOAD CSV WITH HEADERS
+FROM 'FILE:///google_restaurant_review.csv' AS row
+MERGE
+    (r:Review{id: row.place_id + row.time})
+SET
+    r.google_id = row.place_id,
+    //r.url = row.url,
+    r.text = row.text,
+    r.rating = toFloat(row.rating),
+    r.time_created = row.time,
+    //r.user_id = row.user_id,
+    r.user_profile_url = row.author_url,
+    r.user_image_url = row.profile_photo_url,
+    r.user_name = row.author_name
+RETURN
+    count(r) as Restaurant_Google_Review;
+
+// ----------------------------------------------
+// Insert attraction review nodes with Yelp data
+// ----------------------------------------------
+LOAD CSV WITH HEADERS
+FROM 'FILE:///yelp_attraction_review.csv' AS row
+MERGE
+    (r:Review{id: row.id})
+SET
+    r.yelp_id = row.business_id,
+    //r.url = row.url,
+    r.text = row.text,
+    r.rating = toFloat(row.rating),
+    r.time_created = row.time_created,
+    //r.user_id = row.user_id,
+    r.user_profile_url = row.user_profile_url,
+    r.user_image_url = row.user_image_url,
+    r.user_name = row.user_name
+RETURN
+    count(r) as Attraction_Yelp_Review;
+
+// ----------------------------------------------
+// Insert hotel review nodes with Yelp data
+// ----------------------------------------------
+LOAD CSV WITH HEADERS
+FROM 'FILE:///yelp_hotel_review.csv' AS row
+MERGE
+    (r:Review{id: row.id})
+SET
+    r.yelp_id = row.business_id,
+    //r.url = row.url,
+    r.text = row.text,
+    r.rating = toFloat(row.rating),
+    r.time_created = row.time_created,
+    //r.user_id = row.user_id,
+    r.user_profile_url = row.user_profile_url,
+    r.user_image_url = row.user_image_url,
+    r.user_name = row.user_name
+RETURN
+    count(r) as Hotel_Yelp_Review;
+
+// ----------------------------------------------
+// Create Restaurant->Is_Reviewed->Review relationship
+// ----------------------------------------------
+MATCH
+    (b:Restaurant), (rev:Review)
+WHERE
+    b.yelp_id = rev.yelp_id
+    OR b.google_id = rev.google_id
+CREATE
+    (b)-[r:Is_Reviewed]->(rev)
+RETURN
+    count(r) as Restaurant_Review_relationship;
+
+// ----------------------------------------------
+// Create Attraction->Is_Reviewed->Review relationship
+// ----------------------------------------------
+MATCH
+    (b:Attraction), (rev:Review)
+WHERE
+    b.yelp_id = rev.yelp_id
+    OR b.google_id = rev.google_id
+CREATE
+    (b)-[r:Is_Reviewed]->(rev)
+RETURN
+    count(r) as Attraction_Review_relationship;
+
+// ----------------------------------------------
+// Create Hotel->Is_Reviewed->Review relationship
+// ----------------------------------------------
+MATCH
+    (b:Hotel), (rev:Review)
+WHERE
+    b.yelp_id = rev.yelp_id
+    OR b.google_id = rev.google_id
+CREATE
+    (b)-[r:Is_Reviewed]->(rev)
+RETURN
+    count(r) as Hotel_Review_relationship;
+
+// ----------------------------------------------
+// Connect Restaurant->Is_Nearby->Restaurant relationship
+// ----------------------------------------------
+MATCH
+    (a:Restaurant), (b:Restaurant) 
+WHERE
+    distance(a.coordinate, b.coordinate) < 1600
+    AND (a.yelp_id <> b.yelp_id OR a.google_id <> b.google_id)
+CREATE
+    (a)-[r:Is_Nearby]->(b) 
+RETURN
+    count(r) as Restaurant_Restaurant_distance_relationship;
+
+// ----------------------------------------------
+// Connect Restaurant->Is_Nearby->Attraction relationship
+// ----------------------------------------------
+MATCH
+    (a:Restaurant), (b:Attraction) 
+WHERE
+    distance(a.coordinate, b.coordinate) < 1600
+    AND (a.yelp_id <> b.yelp_id OR a.google_id <> b.google_id)
+CREATE
+    (a)-[r:Is_Nearby]->(b) 
+RETURN
+    count(r) as Restaurant_Attraction_distance_relationship;
+
+// ----------------------------------------------
+// Connect Restaurant->Is_Nearby->Hotel relationship
+// ----------------------------------------------
+MATCH
+    (a:Restaurant), (b:Hotel) 
+WHERE
+    distance(a.coordinate, b.coordinate) < 1600
+    AND (a.yelp_id <> b.yelp_id OR a.google_id <> b.google_id)
+CREATE
+    (a)-[r:Is_Nearby]->(b) 
+RETURN
+    count(r) as Restaurant_Hotel_distance_relationship;
+
+// ----------------------------------------------
+// Connect Attraction->Is_Nearby->Attraction relationship
+// ----------------------------------------------
+MATCH
+    (a:Attraction), (b:Attraction) 
+WHERE
+    distance(a.coordinate, b.coordinate) < 1600
+    AND (a.yelp_id <> b.yelp_id OR a.google_id <> b.google_id)
+CREATE
+    (a)-[r:Is_Nearby]->(b) 
+RETURN
+    count(r) as Attraction_Attraction_distance_relationship;
+
+// ----------------------------------------------
+// Connect Attraction->Is_Nearby->Hotel relationship
+// ----------------------------------------------
+MATCH
+    (a:Attraction), (b:Hotel) 
+WHERE
+    distance(a.coordinate, b.coordinate) < 1600
+    AND (a.yelp_id <> b.yelp_id OR a.google_id <> b.google_id)
+CREATE
+    (a)-[r:Is_Nearby]->(b) 
+RETURN
+    count(r) as Attraction_Hotel_distance_relationship;
+
+// ----------------------------------------------
+// Connect Hotel->Is_Nearby->Hotel relationship
+// ----------------------------------------------
+MATCH
+    (a:Hotel), (b:Hotel) 
+WHERE
+    distance(a.coordinate, b.coordinate) < 1600
+    AND (a.yelp_id <> b.yelp_id OR a.google_id <> b.google_id)
+CREATE
+    (a)-[r:Is_Nearby]->(b) 
+RETURN
+    count(r) as Hotel_Hotel_distance_relationship;
+
+// ----------------------------------------------

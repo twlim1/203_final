@@ -24,14 +24,15 @@ function run_cypher {
     echo " "
     echo "----------------------------------------------"
     echo "Running $1:"
+    echo "----------------------------------------------"
     echo " "
     cat "$CYPHERS/$1"
     cat "$CYPHERS/$1" | "$cypher_shell" -a "$ENDPOINT" -u "$USERNAME" -p "$PASSWORD"
 }
 
 # Copy from data folder
-cp data/yelp_*.csv "$NEO4J_IMPORT/"
+cp data/*.csv "$NEO4J_IMPORT/"
 
 # Run cypher scripts to import to Neo4J
 run_cypher 0_init.cyphers
-run_cypher 1_yelp.cyphers
+run_cypher 1_places_of_interest.cyphers
