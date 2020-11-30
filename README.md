@@ -21,10 +21,10 @@ sh ./cyphers/run_cyphers.sh
 
 ## Reference code
 
-1. Clone Google maps services python repo to ./data_sources/google/
+1. Clone contents of Google maps services python repo to ./data_sources/google/
 
 [Google maps services python](https://github.com/googlemaps/google-maps-services-python)
 
-2. Clone Yelp API python repo to ./data_sources/yelp/
+2. Clone contents of Yelp API python repo to ./data_sources/yelp/
 
 [Yelp API python](https://github.com/gfairchild/yelpapi)
