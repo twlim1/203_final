@@ -19,6 +19,17 @@ except ImportError:
     print('pip install python-zillow')
     raise
 
+try:
+    sys.path.append('../google')
+    from google_api import NeighborhoodLookup
+    NL = NeighborhoodLookup()
+except ImportError:
+    print('google_api ImportError: extra neighborhood data will not be retrieved.')
+    NL = None
+finally:
+    sys.path.remove('../google')
+
+
 csvInput  = '../../data/SDaddr.csv'
 csvOutput = '../../data/zillow_properties.csv'
 
@@ -43,7 +54,7 @@ ATTRIBUTES = [
     'size',
     #'lot_size',
     #'lot_size_units',
-    #'description',
+    'description',
 ]
 
 # csv setup
@@ -96,8 +107,9 @@ class ZillowProperty():
         except:
             return False
 
-    def toCsv(self, writer):
-        writer.writerow([self[a] for a in ATTRIBUTES])
+    # Returns a "row" intended for csv writing
+    def getRow(self):
+        return [self[a] for a in ATTRIBUTES]
 
 
 # Fill out as much data as we can using python-zillow. The 'url' field is
@@ -214,7 +226,9 @@ def fillIn(zp):
             # parseable text data given by a human
             #
 
-            #_ = zp.tryFill('description',moredata, ['description'])
+            _ = zp.tryFill('description', moredata, ['description'])
+            zp.description = zp.description.replace('"', '') # this is for ONE property that
+                                                             # has data that trips up cypher
 
             #
             # I think sqft is implied here since 'lotAreaValue' and 'lotAreaUnits'
@@ -222,26 +236,49 @@ def fillIn(zp):
             #
 
             #z = zp.tryFill('lot_size',   moredata, ['lotSize'])
+        else:
+            with open('JAMES.txt', 'a') as f:
+                f.write(key + '\n')
 
     return zp, apicache
 
+def fillNeighborhood(zp):
+    # A sneaky type coersion is here.
+    if isinstance(zp.neighborhood, str):
+        zp.neighborhood = [zp.neighborhood]
 
-# zillow api key expected to be at ~/.zkey
-with open(os.path.join(os.path.expanduser('~'), '.zkey')) as f:
-    key = f.read().strip()
+    if NL is None:
+        return zp, None
+
+    res = NL.neighborhood_lookup((zp.latitude, zp.longitude), None)
+    if 'neighborhood' in res:
+        zp.neighborhood = res['neighborhood']
+    
+    return zp, res
 
 
-with open(csvInput) as f:
-    for i, row in enumerate(csv.reader(f, delimiter='\t')):
-        address, zipcode, latitude, longitude = row
+count = 0
 
-        try:
-            zp, apidata = getInitialData(key, address, zipcode, latitude, longitude, i)
-        except ZillowError:
-            print(f'Zillow api did not like this property: {address}', file=sys.stderr)
-            continue
+#if __name__ == '__main__':
+if True:
 
-        _, a = fillIn(zp)
-        zp.toCsv(writer)
+    # zillow api key expected to be at ~/.zkey
+    with open(os.path.join(os.path.expanduser('~'), '.zkey')) as f:
+        key = f.read().strip()
 
-        sleep(.5)    
+    with open(csvInput) as f:
+        for i, row in enumerate(csv.reader(f, delimiter='\t')):
+            address, zipcode, latitude, longitude = row
+
+            try:
+                zp, apidata = getInitialData(key, address, zipcode, latitude, longitude, i)
+            except ZillowError:
+                print(f'Zillow api did not like this property: {address}', file=sys.stderr)
+                continue
+
+            _, a = fillIn(zp)
+            _, b = fillNeighborhood(zp)
+            
+            writer.writerow(zp.getRow())
+
+            sleep(.5)    

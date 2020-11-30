@@ -1,5 +1,37 @@
+//
+// Setup
+//
+
+CREATE INDEX ON :Property(id);
+
+MATCH (n:Neighborhood) DELETE n;
+
+//
+// Open file for neighborhood nodes
+//
 LOAD CSV WITH HEADERS
 FROM 'FILE:///zillow_properties.csv' AS row
+
+//
+// Neighborhood nodes
+//
+// The date is given to us as a string, ex:
+// "['Del Cerro', 'Kensington']"
+// The goal below is to convert string to list as well as trim quotes and
+// whitespace from the inner neighborhood names.
+//
+UNWIND split(substring(row.neighborhood, 1, size(row.neighborhood)-2), ',') as neighborhood
+MERGE (n:Neighborhood {name: replace(trim(neighborhood), "'", "")});
+
+//
+// Open file again
+//
+LOAD CSV WITH HEADERS
+FROM 'FILE:///zillow_properties.csv' AS row
+
+//
+// Property nodes
+//
 MERGE
     (p:Property {id: row.id})
 SET
@@ -15,6 +47,8 @@ SET
     p.bed = row.bed,
     p.bath = row.bath,
     p.year_build = row.year_build,
-    p.size = row.size
+    p.size = row.size,
+    p.description = row.description
 RETURN
     count(p) as Property;
+
