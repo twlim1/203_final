@@ -242,81 +242,3 @@ RETURN
     count(r) as Hotel_Review_relationship;
 
 // ----------------------------------------------
-// Connect Restaurant->Is_Nearby->Restaurant relationship
-// ----------------------------------------------
-MATCH
-    (a:Restaurant), (b:Restaurant) 
-WHERE
-    distance(a.coordinate, b.coordinate) < 1600
-    AND (a.yelp_id <> b.yelp_id OR a.google_id <> b.google_id)
-CREATE
-    (a)-[r:Is_Nearby]->(b) 
-RETURN
-    count(r) as Restaurant_Restaurant_distance_relationship;
-
-// ----------------------------------------------
-// Connect Restaurant->Is_Nearby->Attraction relationship
-// ----------------------------------------------
-MATCH
-    (a:Restaurant), (b:Attraction) 
-WHERE
-    distance(a.coordinate, b.coordinate) < 1600
-    AND (a.yelp_id <> b.yelp_id OR a.google_id <> b.google_id)
-CREATE
-    (a)-[r:Is_Nearby]->(b) 
-RETURN
-    count(r) as Restaurant_Attraction_distance_relationship;
-
-// ----------------------------------------------
-// Connect Restaurant->Is_Nearby->Hotel relationship
-// ----------------------------------------------
-MATCH
-    (a:Restaurant), (b:Hotel) 
-WHERE
-    distance(a.coordinate, b.coordinate) < 1600
-    AND (a.yelp_id <> b.yelp_id OR a.google_id <> b.google_id)
-CREATE
-    (a)-[r:Is_Nearby]->(b) 
-RETURN
-    count(r) as Restaurant_Hotel_distance_relationship;
-
-// ----------------------------------------------
-// Connect Attraction->Is_Nearby->Attraction relationship
-// ----------------------------------------------
-MATCH
-    (a:Attraction), (b:Attraction) 
-WHERE
-    distance(a.coordinate, b.coordinate) < 1600
-    AND (a.yelp_id <> b.yelp_id OR a.google_id <> b.google_id)
-CREATE
-    (a)-[r:Is_Nearby]->(b) 
-RETURN
-    count(r) as Attraction_Attraction_distance_relationship;
-
-// ----------------------------------------------
-// Connect Attraction->Is_Nearby->Hotel relationship
-// ----------------------------------------------
-MATCH
-    (a:Attraction), (b:Hotel) 
-WHERE
-    distance(a.coordinate, b.coordinate) < 1600
-    AND (a.yelp_id <> b.yelp_id OR a.google_id <> b.google_id)
-CREATE
-    (a)-[r:Is_Nearby]->(b) 
-RETURN
-    count(r) as Attraction_Hotel_distance_relationship;
-
-// ----------------------------------------------
-// Connect Hotel->Is_Nearby->Hotel relationship
-// ----------------------------------------------
-MATCH
-    (a:Hotel), (b:Hotel) 
-WHERE
-    distance(a.coordinate, b.coordinate) < 1600
-    AND (a.yelp_id <> b.yelp_id OR a.google_id <> b.google_id)
-CREATE
-    (a)-[r:Is_Nearby]->(b) 
-RETURN
-    count(r) as Hotel_Hotel_distance_relationship;
-
-// ----------------------------------------------

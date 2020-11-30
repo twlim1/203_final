@@ -18,3 +18,13 @@ NEO4J_IMPORT="/Users/<name>/Library/Application Support/com.Neo4j.Relate/Data/db
 ```
 sh ./cyphers/run_cyphers.sh
 ```
+
+## Reference code
+
+1. Clone Google maps services python repo to ./data_sources/google/
+
+[Google maps services python](https://github.com/googlemaps/google-maps-services-python)
+
+2. Clone Yelp API python repo to ./data_sources/yelp/
+
+[Yelp API python](https://github.com/gfairchild/yelpapi)
