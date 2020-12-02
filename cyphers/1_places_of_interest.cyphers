@@ -1,4 +1,23 @@
 // ----------------------------------------------
+// Insert neighborhood nodes
+// ----------------------------------------------
+CALL apoc.load.csv('FILE:///yelp_restaurant.csv')
+YIELD map
+WHERE map.neighborhood <> ''
+MERGE
+    (r:Neighborhood {name: map.neighborhood})
+RETURN
+    count(distinct r) as Yelp_Neighborhood;
+
+CALL apoc.load.csv('FILE:///google_restaurant.csv')
+YIELD map
+WHERE map.neighborhood <> ''
+MERGE
+    (r:Neighborhood {name: map.neighborhood})
+RETURN
+    count(distinct r) as Google_Neighborhood;
+
+// ----------------------------------------------
 // Insert restaurant nodes with Yelp data
 // ----------------------------------------------
 LOAD CSV WITH HEADERS
@@ -31,7 +50,7 @@ RETURN
 LOAD CSV WITH HEADERS
 FROM 'FILE:///restaurant_match.csv' AS row
 MERGE
-    (r:Restaurant{yelp_id: row.ltable_id})
+    (r:Restaurant {yelp_id: row.ltable_id})
 SET
     r.google_id = row.rtable_place_id
 RETURN
@@ -74,7 +93,7 @@ RETURN
 LOAD CSV WITH HEADERS
 FROM 'FILE:///yelp_attraction.csv' AS row
 MERGE
-    (r:Attraction{yelp_id: row.id})
+    (r:Attraction {yelp_id: row.id})
 SET
     //r.alias = row.alias,
     r.name = row.name,
@@ -101,7 +120,7 @@ RETURN
 LOAD CSV WITH HEADERS
 FROM 'FILE:///yelp_hotel.csv' AS row
 MERGE
-    (r:Hotel{yelp_id: row.id})
+    (r:Hotel {yelp_id: row.id})
 SET
     //r.alias = row.alias,
     r.name = row.name,
@@ -128,7 +147,7 @@ RETURN
 LOAD CSV WITH HEADERS
 FROM 'FILE:///yelp_restaurant_review.csv' AS row
 MERGE
-    (r:Review{id: row.id})
+    (r:Review {id: row.id})
 SET
     r.yelp_id = row.business_id,
     //r.url = row.url,
@@ -148,7 +167,7 @@ RETURN
 LOAD CSV WITH HEADERS
 FROM 'FILE:///google_restaurant_review.csv' AS row
 MERGE
-    (r:Review{id: row.place_id + row.time})
+    (r:Review {id: row.place_id + row.time})
 SET
     r.google_id = row.place_id,
     //r.url = row.url,
@@ -168,7 +187,7 @@ RETURN
 LOAD CSV WITH HEADERS
 FROM 'FILE:///yelp_attraction_review.csv' AS row
 MERGE
-    (r:Review{id: row.id})
+    (r:Review {id: row.id})
 SET
     r.yelp_id = row.business_id,
     //r.url = row.url,
@@ -188,7 +207,7 @@ RETURN
 LOAD CSV WITH HEADERS
 FROM 'FILE:///yelp_hotel_review.csv' AS row
 MERGE
-    (r:Review{id: row.id})
+    (r:Review {id: row.id})
 SET
     r.yelp_id = row.business_id,
     //r.url = row.url,
@@ -201,6 +220,18 @@ SET
     r.user_name = row.user_name
 RETURN
     count(r) as Hotel_Yelp_Review;
+
+// ----------------------------------------------
+// Create Restaurant->In->Neighborhood relationship
+// ----------------------------------------------
+MATCH
+    (b:Restaurant), (n:Neighborhood)
+WHERE
+    b.neighborhood = n.name
+CREATE
+    (b)-[r:In]->(n)
+RETURN
+    count(r) as In_relationship;
 
 // ----------------------------------------------
 // Create Restaurant->Is_Reviewed->Review relationship

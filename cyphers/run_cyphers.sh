@@ -31,11 +31,11 @@ function run_cypher {
 }
 
 # Copy from data folder
-cp data/*.csv "$NEO4J_IMPORT/"
+cp data/* "$NEO4J_IMPORT/"
 
 # Run cypher scripts to import to Neo4J
 run_cypher 0_init.cyphers
 run_cypher 1_places_of_interest.cyphers
-# TODO run_cypher 2_zillow
-# TODO run_cypher 3_airbnb
+run_cypher 2_zillow.cyphers
+run_cypher 3_airbnb.cyphers
 run_cypher 4_relationship.cyphers

@@ -1,0 +1,57 @@
+// create indices for faster loading
+// CREATE INDEX ON :Rental(id);
+// CREATE INDEX ON :Review(id);
+
+// insert Airbnb listings
+CALL apoc.load.json('FILE:///airbnb_listings.json')
+YIELD value
+WHERE value.city = 'San Diego'
+UNWIND value.neighborhood AS neighborhood
+MERGE (n:Neighborhood {name: neighborhood})
+MERGE (r:Rental {id: value.id})
+MERGE (r)-[:In]->(n)
+SET r.property_type_id = value.property_type_id,
+    r.tier_id = value.tier_id,
+    r.name = value.name,
+    r.bedrooms = value.bedrooms,
+    r.beds = value.beds,
+    r.bathrooms = value.bathrooms,
+    r.bedroom_label = value.bedroom_label,
+    r.bathroom_label = value.bathroom_label,
+    r.guests = value.person_capacity,
+    r.city = value.city,
+    r.neighborhood = value.neighborhood,
+    r.coordinate = point(value.coordinate),
+    r.is_superhost = value.is_superhost,
+    r.is_new_listing = value.is_new_listing,
+    r.room_and_property_type = value.room_and_property_type,
+    r.room_type_category = value.room_type_category,
+    r.room_type = value.room_type,
+    r.space_type = value.space_type,
+    r.preview_amenity_names = value.preview_amenity_names,
+    r.amenity_ids = value.amenity_ids,
+    r.content = value.content,
+    r.rate = value.rate
+RETURN count(r) AS Rental, count(n) AS Neighborhood;
+
+// insert Airbnb reviews and connect to listings
+CALL apoc.load.json('FILE:///airbnb_reviews.json')
+YIELD value
+MATCH (a:Rental)
+WHERE a.id = value.listing_id
+MERGE (a)-[r:Is_Reviewed]->(b:Review {id: value.id})
+SET b.listing_id = value.listing_id,
+    b.author_id = value.author_id,
+    b.recipient_id = value.recipient_id,
+    b.rating = value.rating,
+    b.comments = value.comments,
+    b.response = value.response,
+    b.created_at = value.created_at
+RETURN count(b) AS Review;
+
+// connect nearby Airbnb listings
+//MATCH (a:Rental), (b:Rental)
+//WITH a, b, distance(a.coordinate, b.coordinate) as d
+//WHERE d < 1600 AND a.id < b.id
+//CREATE (a)-[r:Is_Nearby {distance: d}]->(b)
+//RETURN count(r);

@@ -15,6 +15,10 @@ DROP CONSTRAINT review_id;
 DROP INDEX review_yelp_id;
 DROP INDEX review_google_id;
 
+DROP CONSTRAINT rental_id;
+
+DROP CONSTRAINT property_id;
+
 // Create constraints and indices
 CREATE CONSTRAINT restaurant_yelp_id ON (n:Restaurant) ASSERT n.yelp_id IS UNIQUE;
 CREATE CONSTRAINT restaurant_google_id ON (n:Restaurant) ASSERT n.google_id IS UNIQUE;
@@ -28,3 +32,7 @@ CREATE CONSTRAINT hotel_google_id ON (n:Hotel) ASSERT n.google_id IS UNIQUE;
 CREATE CONSTRAINT review_id ON (n:Review) ASSERT n.id IS UNIQUE;
 CREATE INDEX review_yelp_id FOR (n:Review) ON (n.yelp_id);
 CREATE INDEX review_google_id FOR (n:Review) ON (n.google_id);
+
+CREATE CONSTRAINT rental_id ON (n:Rental) ASSERT n.id IS UNIQUE;
+
+CREATE CONSTRAINT property_id ON (n:Property) ASSERT n.id IS UNIQUE;
