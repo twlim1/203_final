@@ -1,0 +1,211 @@
+// ----------------------------------------------
+// Connect Restaurant->Is_Nearby->Restaurant relationship
+// ----------------------------------------------
+MATCH
+    (a:Restaurant), (b:Restaurant) 
+WITH
+    a, b, distance(a.coordinate, b.coordinate) as d
+WHERE
+    d < 1600 AND (a.yelp_id <> b.yelp_id OR a.google_id <> b.google_id)
+CREATE
+    (a)-[r:Is_Nearby {distance: d}]->(b)
+RETURN
+    count(r) as Restaurant_Restaurant_distance_relationship;
+
+// ----------------------------------------------
+// Connect Restaurant->Is_Nearby->Attraction relationship
+// ----------------------------------------------
+MATCH
+    (a:Restaurant), (b:Attraction) 
+WITH
+    a, b, distance(a.coordinate, b.coordinate) as d
+WHERE
+    d < 1600
+CREATE
+    (a)-[r1:Is_Nearby {distance: d}]->(b)<-[r2:Is_Nearby {distance: d}]-(a) 
+RETURN
+    count(r1) as Restaurant_Attraction_distance_relationship;
+
+// ----------------------------------------------
+// Connect Restaurant->Is_Nearby->Hotel relationship
+// ----------------------------------------------
+MATCH
+    (a:Restaurant), (b:Hotel) 
+WITH
+    a, b, distance(a.coordinate, b.coordinate) as d
+WHERE
+    d < 1600
+CREATE
+    (a)-[r1:Is_Nearby {distance: d}]->(b)<-[r2:Is_Nearby {distance: d}]-(a) 
+RETURN
+    count(r1) as Restaurant_Hotel_distance_relationship;
+
+// ----------------------------------------------
+// Connect Restaurant->Is_Nearby->Airbnb relationship
+// ----------------------------------------------
+MATCH
+    (a:Restaurant), (b:Rental)
+WITH
+    a, b, distance(a.coordinate, b.coordinate) as d
+WHERE
+    d < 1600
+CREATE
+    (a)-[r1:Is_Nearby {distance: d}]->(b)<-[r2:Is_Nearby {distance: d}]-(a) 
+RETURN
+    count(r1) as Restaurant_Airbnb_distance_relationship;
+
+// ----------------------------------------------
+// Connect Restaurant->Is_Nearby->Zillow relationship
+// ----------------------------------------------
+MATCH
+    (a:Restaurant), (b:Property)
+WITH
+    a, b, distance(a.coordinate, b.coordinate) as d
+WHERE
+    d < 1600
+CREATE
+    (a)-[r1:Is_Nearby {distance: d}]->(b)<-[r2:Is_Nearby {distance: d}]-(a) 
+RETURN
+    count(r1) as Restaurant_Zillow_distance_relationship;
+
+// ----------------------------------------------
+// Connect Attraction->Is_Nearby->Attraction relationship
+// ----------------------------------------------
+MATCH
+    (a:Attraction), (b:Attraction) 
+WITH
+    a, b, distance(a.coordinate, b.coordinate) as d
+WHERE
+    d < 1600 AND (a.yelp_id <> b.yelp_id OR a.google_id <> b.google_id)
+CREATE
+    (a)-[r:Is_Nearby {distance: d}]->(b)
+RETURN
+    count(r) as Attraction_Attraction_distance_relationship;
+
+// ----------------------------------------------
+// Connect Attraction->Is_Nearby->Hotel relationship
+// ----------------------------------------------
+MATCH
+    (a:Attraction), (b:Hotel) 
+WITH
+    a, b, distance(a.coordinate, b.coordinate) as d
+WHERE
+    d < 1600
+CREATE
+    (a)-[r1:Is_Nearby {distance: d}]->(b)<-[r2:Is_Nearby {distance: d}]-(a) 
+RETURN
+    count(r1) as Attraction_Hotel_distance_relationship;
+
+// ----------------------------------------------
+// Connect Attraction->Is_Nearby->Airbnb relationship
+// ----------------------------------------------
+MATCH
+    (a:Attraction), (b:Rental) 
+WITH
+    a, b, distance(a.coordinate, b.coordinate) as d
+WHERE
+    d < 1600
+CREATE
+    (a)-[r1:Is_Nearby {distance: d}]->(b)<-[r2:Is_Nearby {distance: d}]-(a) 
+RETURN
+    count(r1) as Attraction_Airbnb_distance_relationship;
+
+// ----------------------------------------------
+// Connect Attraction->Is_Nearby->Zillow relationship
+// ----------------------------------------------
+MATCH
+    (a:Attraction), (b:Property)
+WITH
+    a, b, distance(a.coordinate, b.coordinate) as d
+WHERE
+    d < 1600
+CREATE
+    (a)-[r1:Is_Nearby {distance: d}]->(b)<-[r2:Is_Nearby {distance: d}]-(a) 
+RETURN
+    count(r1) as Attraction_Zillow_distance_relationship;
+
+// ----------------------------------------------
+// Connect Hotel->Is_Nearby->Hotel relationship
+// ----------------------------------------------
+MATCH
+    (a:Hotel), (b:Hotel) 
+WITH
+    a, b, distance(a.coordinate, b.coordinate) as d
+WHERE
+    d < 1600 AND (a.yelp_id <> b.yelp_id OR a.google_id <> b.google_id)
+CREATE
+    (a)-[r:Is_Nearby {distance: d}]->(b)
+RETURN
+    count(r) as Hotel_Hotel_distance_relationship;
+
+// ----------------------------------------------
+// Connect Hotel->Is_Nearby->Airbnb relationship
+// ----------------------------------------------
+MATCH
+    (a:Hotel), (b:Rental) 
+WITH
+    a, b, distance(a.coordinate, b.coordinate) as d
+WHERE
+    d < 1600
+CREATE
+    (a)-[r1:Is_Nearby {distance: d}]->(b)<-[r2:Is_Nearby {distance: d}]-(a) 
+RETURN
+    count(r1) as Hotel_Airbnb_distance_relationship;
+
+// ----------------------------------------------
+// Connect Hotel->Is_Nearby->Zillow relationship
+// ----------------------------------------------
+MATCH
+    (a:Hotel), (b:Property)
+WITH
+    a, b, distance(a.coordinate, b.coordinate) as d
+WHERE
+    d < 1600
+CREATE
+    (a)-[r1:Is_Nearby {distance: d}]->(b)<-[r2:Is_Nearby {distance: d}]-(a) 
+RETURN
+    count(r1) as Hotel_Zillow_distance_relationship;
+
+// ----------------------------------------------
+// Connect Airbnb->Is_Nearby->Airbnb relationship
+// ----------------------------------------------
+MATCH
+    (a:Rental), (b:Rental)
+WITH
+    a, b, distance(a.coordinate, b.coordinate) as d
+WHERE
+    d < 1600 AND a.id <> b.id
+CREATE
+    (a)-[r:Is_Nearby {distance: d}]->(b)
+RETURN
+    count(r) as Airbnb_Airbnb_distance_relationship;
+
+// ----------------------------------------------
+// Connect Airbnb->Is_Nearby->Zillow relationship
+// ----------------------------------------------
+MATCH
+    (a:Rental), (b:Property)
+WITH
+    a, b, distance(a.coordinate, b.coordinate) as d
+WHERE
+    d < 1600
+CREATE
+    (a)-[r1:Is_Nearby {distance: d}]->(b)<-[r2:Is_Nearby {distance: d}]-(a) 
+RETURN
+    count(r1) as Airbnb_Zillow_distance_relationship;
+
+// ----------------------------------------------
+// Connect Zillow->Is_Nearby->Zillow relationship
+// ----------------------------------------------
+MATCH
+    (a:Property), (b:Property)
+WITH
+    a, b, distance(a.coordinate, b.coordinate) as d
+WHERE
+    d < 1600 AND a.id <> b.id
+CREATE
+    (a)-[r:Is_Nearby {distance: d}]->(b)
+RETURN
+    count(r) as Zillow_Zillow_distance_relationship;
+
+// ----------------------------------------------
