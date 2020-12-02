@@ -1,6 +1,9 @@
-// create indices for faster loading
-CREATE INDEX ON :Rental(id);
-CREATE INDEX ON :Review(id);
+// create uniqueness constraints on node IDs and names
+CREATE CONSTRAINT rental_id ON (n:Rental) ASSERT n.id IS UNIQUE;
+CREATE CONSTRAINT review_id ON (n:Review) ASSERT n.id IS UNIQUE;
+CREATE CONSTRAINT topic_id ON (n:Topic) ASSERT n.id IS UNIQUE;
+CREATE CONSTRAINT city_name ON (n:City) ASSERT n.name IS UNIQUE;
+CREATE CONSTRAINT neighborhood_name ON (n:Neighborhood) ASSERT n.name IS UNIQUE;
 
 // insert Airbnb listings
 CALL apoc.load.json('FILE:///airbnb_listings.json')
