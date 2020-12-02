@@ -8,13 +8,9 @@ CREATE CONSTRAINT neighborhood_name ON (n:Neighborhood) ASSERT n.name IS UNIQUE;
 // insert Airbnb listings
 CALL apoc.load.json('FILE:///airbnb_listings.json')
 YIELD value
-UNWIND value.neighborhood AS neighborhood
-MERGE (n:Neighborhood {name: neighborhood})
-MERGE (c:City {name: value.city})
 MERGE (r:Rental {id: value.id})
-MERGE (r)-[:IN]->(n)
+MERGE (c:City {name: value.city})
 MERGE (r)-[:IN]->(c)
-MERGE (n)-[:IN]->(c)
 SET r.property_type_id = value.property_type_id,
     r.tier_id = value.tier_id,
     r.name = value.name,
@@ -37,6 +33,11 @@ SET r.property_type_id = value.property_type_id,
     r.amenity_ids = value.amenity_ids,
     r.content = value.content,
     r.rate = value.rate
+WITH value, r, c
+UNWIND value.neighborhood AS neighborhood
+MERGE (n:Neighborhood {name: neighborhood})
+MERGE (r)-[:IN]->(n)
+MERGE (n)-[:IN]->(c)
 RETURN count(r) AS Rental, count(n) AS Neighborhood, count(c) AS City;
 
 // insert Airbnb reviews and connect to listings
