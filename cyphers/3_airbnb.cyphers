@@ -52,7 +52,7 @@ SET b.listing_id = value.listing_id,
     b.rating = value.rating,
     b.comments = value.comments,
     b.response = value.response,
-    b.created_at = value.created_at
+    b.created_at = datetime(value.created_at)
 RETURN count(b) AS Review;
 
 CALL apoc.load.json('FILE:///airbnb_review_topics.json')
