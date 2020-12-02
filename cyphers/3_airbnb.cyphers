@@ -41,7 +41,8 @@ CALL apoc.load.json('FILE:///airbnb_reviews.json')
 YIELD value
 MATCH (a:Rental)
 WHERE a.id = value.listing_id
-MERGE (a)-[r:Is_Reviewed]->(b:Review {id: value.id})
+MERGE (b:Review {id: value.id})
+MERGE (a)-[r:Is_Reviewed]->(b)
 SET b.listing_id = value.listing_id,
     b.author_id = value.author_id,
     b.recipient_id = value.recipient_id,
