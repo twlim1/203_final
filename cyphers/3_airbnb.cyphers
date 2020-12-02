@@ -55,14 +55,17 @@ SET b.listing_id = value.listing_id,
     b.created_at = datetime(value.created_at)
 RETURN count(b) AS Review;
 
+// insert neighborhood topics from Airbnb reviews
 CALL apoc.load.json('FILE:///airbnb_review_topics.json')
 YIELD value
-MATCH (n:Neighborhood)
-WHERE n.name = value.neighborhood
 MERGE (t:Topic {id: value.topic})
-MERGE (n)-[r:Has_Topic]->(t)
 SET t.words = value.words
-RETURN count(t) AS Topic;
+WITH value, t
+UNWIND value.neighborhood AS neighborhood
+MATCH (n:Neighborhood)
+WHERE n.name = neighborhood
+MERGE (n)-[r:Has_Topic]->(t)
+RETURN count(t) AS Topic, count(r) AS TopicConnection;
 
 // connect nearby Airbnb listings
 MATCH (a:Rental), (b:Rental)
