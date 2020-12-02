@@ -11,27 +11,17 @@ YIELD value
 MERGE (r:Rental {id: value.id})
 MERGE (c:City {name: value.city})
 MERGE (r)-[:IN]->(c)
-SET r.property_type_id = value.property_type_id,
+SET r.type_id = value.property_type_id,
     r.tier_id = value.tier_id,
     r.name = value.name,
     r.bedrooms = value.bedrooms,
-    r.beds = value.beds,
     r.bathrooms = value.bathrooms,
     r.bedroom_label = value.bedroom_label,
     r.bathroom_label = value.bathroom_label,
-    r.guests = value.person_capacity,
-    r.city = value.city,
-    r.neighborhood = value.neighborhood,
     r.coordinate = point(value.coordinate),
-    r.is_superhost = value.is_superhost,
-    r.is_new_listing = value.is_new_listing,
-    r.room_and_property_type = value.room_and_property_type,
-    r.room_type_category = value.room_type_category,
-    r.room_type = value.room_type,
     r.space_type = value.space_type,
-    r.preview_amenity_names = value.preview_amenity_names,
+    r.amenity_names = value.preview_amenity_names,
     r.amenity_ids = value.amenity_ids,
-    r.content = value.content,
     r.rate = value.rate
 WITH value, r, c
 UNWIND value.neighborhood AS neighborhood
