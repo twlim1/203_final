@@ -43,11 +43,37 @@ SET
 RETURN
     count(p) as Property;
 
+
+
+//
+// Unwind and LOAD CSV don't mix well so convert the string version of
+// 'neighborhood' to a list here.
+//
+// Example neighborhood string: "['Smart Corner', 'East Village']"
+//
+MATCH
+    (p:Property)
+WHERE
+    p.neighborhood IS NOT NULL
+SET
+    p.neighborhood
+        =
+    SPLIT(REPLACE(REPLACE(REPLACE(p.neighborhood, '[', ''),
+                                                  ']', ''),
+                                                  "'", ''),
+    ', ')
+RETURN
+    count(p) as numFixedNeighborhoods
+;
+
+//
+// Connect "In" relationships
+//
 MATCH
     (p:Property), (n:Neighborhood)
 WHERE
-    p.neighborhood = n.name
+    n.name IN p.neighborhood
 CREATE
-    (b)-[r:In]->(n)
+    (p)-[r:In]->(n)
 RETURN
-    count(r) as In_relationship;
+    COUNT(r) AS In_relationship;
