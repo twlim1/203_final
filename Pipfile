@@ -1,0 +1,25 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+pandas = "*"
+geopandas = "*"
+airbnb = "*"
+python-zillow = "*"
+googlemaps = "*"
+beautifulsoup4 = "*"
+py-stringmatching = "*"
+gensim = "*"
+spacy = "*"
+seaborn = "*"
+wordcloud = "*"
+tqdm = "*"
+neo4j = "*"
+jupyterlab = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.8"
