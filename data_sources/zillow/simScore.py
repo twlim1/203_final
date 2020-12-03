@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import os
 import sys
+import ast
 import json
 
 from pprint import pprint
@@ -38,10 +39,10 @@ airbnb_attrs = [
     'neighborhood',
 ]
 
-# zillow attributes that are named differently in airbnb
-zillow_to_airbnb_keys = {
-    'bed':  'bedrooms',
-    'bath': 'bathrooms',
+# airbnb attributes that are named differently in zillow
+airbnb_to_zillow_keys = {
+    'bedrooms':  'bed',
+    'bathrooms': 'bath',
 }
 
 
@@ -88,6 +89,9 @@ class ZPFG:
                     self[actual_key] = None
                 else:
                     self[actual_key] = key_to_type[actual_key](v)
+            elif actual_key == 'neighborhood' and isinstance(v, str):
+                # ex: "['San Diego']"
+                self[actual_key] = ast.literal_eval(v)
             else:
                 self[actual_key] = v
 
@@ -162,26 +166,35 @@ class ZPFG:
 
 # Container for airbnb data
 class APFJ():
-    def __init__(self, data):
-        # Save data, editing airbnb keys to zillow counterparts where needed
-        for key in airbnb_attrs:
-            try:
-                airbnb_key = zillow_to_airbnb_keys[key]
-            except KeyError:
-                airbnb_key = key
+    def __init__(self, info):
+        self.print_keys = []
 
-            try:
-                self[key] = data[airbnb_key]
-            except KeyError:
-                self[key] = None
+        for k, v in info.items():
+            # Convert neo4j string to something we want to use ex: 'p.price' -> 'price'
+            actual_key = k.split('.')[1]
 
-        # Speed up comparisons later by pre-calculating neighborhood attributes.
+            # Convert airbnb key names to zillow key names (if needed).
+            if actual_key in airbnb_to_zillow_keys:
+                actual_key = airbnb_to_zillow_keys[actual_key]
+
+            self.print_keys.append(actual_key)
+
+            if actual_key in key_to_type:
+                if v is None:
+                    self[actual_key] = None
+                else:
+                    self[actual_key] = key_to_type[actual_key](v)
+            else:
+                self[actual_key] = v
+
+        # Convert neighborhood to set
         try:
             self.neighborhood_set = set(self.neighborhood)
-        except TypeError: # set(None)
+        except TypeError:
             self.neighborhood_set = set()
 
-        self.num_neighborhoods = len(self.neighborhood_set)
+    def __str__(self):
+        return f'{dict(((k, self[k]) for k in self.print_keys))}'
 
     def __getitem__(self, key):
         return self.__getattribute__(key)
@@ -205,7 +218,7 @@ def zillowZillowConnect(driver):
 
     all_ids = [o.id for o in zillow_props] # make one copy
 
-    threshold = .7
+    threshold = .70
 
     # Link similar properties together in the db.
     #
@@ -217,7 +230,7 @@ def zillowZillowConnect(driver):
 
         # This could be removed if the CREATE is MERGE below, but I believe that
         # would be slower.
-        query = 'MATCH (:Property)-[r:SIMILAR]-(:Property) DELETE r;'
+        query = 'MATCH ()-[r:Is_Similar]-() DELETE r;'
         _ = session.run(query)
 
         for prop in zillow_props:
@@ -225,21 +238,20 @@ def zillowZillowConnect(driver):
                 if id in prop.scores and prop.scores[id] > threshold:
                     query = f'''MATCH (p1:Property), (p2:Property) 
                                 WHERE p1.id = '{prop.id}' AND p2.id = '{id}' 
-                                CREATE (p1)-[:SIMILAR]->(p2), (p2)-[:SIMILAR]->(p1)'''
-                    #results = session.run(query)
+                                CREATE (p1)-[:Is_Similar]->(p2), (p2)-[:Is_Similar]->(p1)'''
+                    results = session.run(query)
                     count += 2
 
-        print(f'{count} new zillow <--> zillow SIMILAR relationships.')
+        print(f'{count} new zillow <--> zillow Is_Similar relationships.')
     return zillow_props
 
 def zillowAirbnbConnect(driver, zillow_props):
-    # Get data from file
-    with open(airbnb_json) as f:
-        bnb_data = json.load(f)
-
-    # Comparing zillow properties with airbnb rentals makes most sense when
-    # we filter out rentals that only consist of a portion of a residence.
-    airbnb_props = [obj for r in bnb_data if (obj := APFJ(r)).room_type_category == 'entire_home']
+    # Get data from db
+    with driver.session() as session:
+        query  = 'MATCH (r:Rental) '
+        query += 'RETURN r.id, r.bedrooms, r.bathrooms, r.room_type_category, r.neighborhood '
+        results = session.run(query)
+        airbnb_props = [APFJ(r) for r in results]
 
     # Do all comparisons
     for z_prop in zillow_props:
@@ -247,27 +259,24 @@ def zillowAirbnbConnect(driver, zillow_props):
             z_prop.airbnbCompare(a_prop)
 
     count = 0
-    threshold = .8
+    threshold = .85
 
     with driver.session() as session:
         for z_prop in zillow_props:
             for a_prop in airbnb_props:
                 if z_prop.bnbscores[a_prop.id] > threshold:
                     query = f'''MATCH (p:Property), (r:Rental) 
-                                WHERE p.id = '{z_prop.id}' AND r.id = '{a_prop.id}' 
-                                CREATE (p)-[:SIMILAR]->(r), (r)-[:SIMILAR]->(p)'''
-                    #results = session.run(query)
+                                WHERE p.id = '{z_prop.id}' AND r.id = {a_prop.id} 
+                                CREATE (p)-[:Is_Similar]->(r), (r)-[:Is_Similar]->(p)'''
+                    results = session.run(query)
                     count += 2
 
     total = len(zillow_props) * len(airbnb_props)
-    print(f'{count} new zillow <--> airbnb SIMILAR relationships. (total={total})')
+    print(f'{count} new zillow <--> airbnb Is_Similar relationships. (total={total})')
     
     return airbnb_props
 
-#if __name__ == '__main__':
-if True:
+if __name__ == '__main__':
     driver = GraphDatabase.driver(uri, auth=(user, pw))
     zillow_props = zillowZillowConnect(driver)
     airbnb_props = zillowAirbnbConnect(driver, zillow_props)
-
-
