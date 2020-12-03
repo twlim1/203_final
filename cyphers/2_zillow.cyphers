@@ -1,12 +1,4 @@
 //
-// Setup
-//
-
-CREATE INDEX ON :Property(id);
-
-MATCH (n:Neighborhood) DELETE n;
-
-//
 // Open file for neighborhood nodes
 //
 LOAD CSV WITH HEADERS
@@ -37,8 +29,7 @@ MERGE
 SET
     p.price = row.price,
     p.url = row.url,
-    p.latitude = row.latitude,
-    p.longitude = row.longitude,
+    p.coordinate = point({longitude: toFloat(row.longitude), latitude: toFloat(row.latitude)}),
     p.street = row.street,
     p.city = row.city,
     p.state = row.state,
@@ -52,3 +43,11 @@ SET
 RETURN
     count(p) as Property;
 
+MATCH
+    (p:Property), (n:Neighborhood)
+WHERE
+    p.neighborhood = n.name
+CREATE
+    (b)-[r:In]->(n)
+RETURN
+    count(r) as In_relationship;

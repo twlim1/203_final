@@ -1,2 +1,5 @@
 __pycache__
 data_sources/zillow/html
+.DS_Store
+.idea/
+.ipynb_checkpoints

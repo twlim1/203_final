@@ -16,7 +16,7 @@ uri = 'bolt://localhost:7687'
 user = 'neo4j'
 pw = os.environ['NEO4JPW']
 
-airbnb_json = '/home/james/git/kevin/data/airbnb_listings.json'
+airbnb_json = './../../data/airbnb_listings.json'
 
 cosine_sim = Cosine().get_sim_score
 
