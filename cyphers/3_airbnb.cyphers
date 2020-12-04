@@ -62,7 +62,7 @@ RETURN count(b) AS Airbnb_Review;
 CALL apoc.load.json('FILE:///airbnb_review_topics.json')
 YIELD value
 MERGE (t:Topic {id: value.topic})
-SET t.words = value.words
+SET t.words = value.words,
     t.type = 'rental'
 WITH value, t
 UNWIND value.neighborhood AS neighborhood

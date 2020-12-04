@@ -210,7 +210,7 @@ YIELD value
 MERGE
     (t:Topic {id: value.topic + 100})
 SET
-    t.words = value.words
+    t.words = value.words,
     t.type = 'restaurant'
 WITH
     value, t
