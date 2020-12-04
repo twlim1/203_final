@@ -3,20 +3,20 @@
 //
 LOAD CSV WITH HEADERS
 FROM 'FILE:///zillow_properties.csv' AS row
-MERGE (p:Property {id: row.id})
+MERGE (p:Property {id: toInteger(row.id)})
 MERGE (c:City {name: row.city})
 MERGE (p)-[:Located_In]->(c)
 SET
-    p.price = row.price,
+    p.price = toInteger(row.price),
     p.url = row.url,
     p.coordinate = point({longitude: toFloat(row.longitude), latitude: toFloat(row.latitude)}),
     p.street = row.street,
     p.state = row.state,
-    p.zip_code = row.zipcode,
-    p.bed = row.bed,
-    p.bath = row.bath,
-    p.year_build = row.year_build,
-    p.size = row.size,
+    p.zip_code = toInteger(row.zipcode),
+    p.bed = toInteger(row.bed),
+    p.bath = toFloat(row.bath),
+    p.year_built = toInteger(row.year_built),
+    p.size = toInteger(row.size),
     p.description = row.description
 RETURN
     count(p) AS Zillow_Property,

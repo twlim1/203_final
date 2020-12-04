@@ -18,7 +18,7 @@ SET r.type_id = value.property_type_id,
     r.space_type = value.space_type,
     r.amenity_names = value.preview_amenity_names,
     r.amenity_ids = value.amenity_ids,
-    r.price = value.rate
+    r.price = toInteger(value.rate)
 RETURN
     count(r) AS Airbnb_Rental,
     count(distinct c) AS Airbnb_City;
