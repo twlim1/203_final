@@ -260,7 +260,7 @@ def zillowAirbnbConnect(driver, zillow_props):
             OPTIONAL MATCH (r)-[:Located_In]->(n:Neighborhood)
             RETURN r.id, r.bed, r.bath, r.type_id, r.amenity_ids, r.amenity_names,
                     c.name AS city,
-                    collect(r.neighborhood) AS neighborhood
+                    collect(n.name) AS neighborhood
         '''
         results = session.run(query)
         airbnb_props = [APFG(r) for r in results]
