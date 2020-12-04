@@ -155,8 +155,11 @@ class ZPFG(PropertyContainer):
         if all((self.bath, other.bath)):
             score += 1 / 3 * num_sim(self.bath, other.bath, 0.5)
 
-        # Compare neighborhoods
-        score += 1 / 3 * cosine_sim(self.neighborhood_set, other.neighborhood_set)
+        # Compare neighborhoods or city
+        if len(self.neighborhood_set) > 0 and len(other.neighborhood_set) > 0:
+            score += 1 / 3 * cosine_sim(self.neighborhood_set, other.neighborhood_set)
+        elif self.city == other.city:
+            score += 1 / 3
 
         return score
 
@@ -237,8 +240,11 @@ def zillowZillowConnect(driver):
 
     with driver.session() as session:
         query = '''
-            MATCH (p:Property)
-            RETURN p.id, p.price, p.street, p.size, p.bed, p.bath, p.neighborhood
+            MATCH (p:Property)-[:Located_In]->(c:City)
+            OPTIONAL MATCH (p)-[:Located_In]->(n:Neighborhood)
+            RETURN p.id, p.price, p.street, p.size, p.bed, p.bath,
+                    c.name AS city,
+                    collect(n.name) AS neighborhood
         '''
         results = session.run(query)
         zillow_props = [ZPFG(r) for r in results]
