@@ -1,16 +1,16 @@
 // create uniqueness constraints on node IDs and names
-CREATE CONSTRAINT rental_id ON (n:Rental) ASSERT n.id IS UNIQUE;
-CREATE CONSTRAINT review_id ON (n:Review) ASSERT n.id IS UNIQUE;
-CREATE CONSTRAINT topic_id ON (n:Topic) ASSERT n.id IS UNIQUE;
-CREATE CONSTRAINT city_name ON (n:City) ASSERT n.name IS UNIQUE;
-CREATE CONSTRAINT neighborhood_name ON (n:Neighborhood) ASSERT n.name IS UNIQUE;
+//CREATE CONSTRAINT rental_id ON (n:Rental) ASSERT n.id IS UNIQUE;
+//CREATE CONSTRAINT review_id ON (n:Review) ASSERT n.id IS UNIQUE;
+//CREATE CONSTRAINT topic_id ON (n:Topic) ASSERT n.id IS UNIQUE;
+//CREATE CONSTRAINT city_name ON (n:City) ASSERT n.name IS UNIQUE;
+//CREATE CONSTRAINT neighborhood_name ON (n:Neighborhood) ASSERT n.name IS UNIQUE;
 
 // insert Airbnb listings
 CALL apoc.load.json('FILE:///airbnb_listings.json')
 YIELD value
 MERGE (r:Rental {id: value.id})
 MERGE (c:City {name: value.city})
-MERGE (r)-[:IN]->(c)
+MERGE (r)-[:Located_In]->(c)
 SET r.type_id = value.property_type_id,
     r.tier_id = value.tier_id,
     r.name = value.name,
@@ -26,8 +26,8 @@ SET r.type_id = value.property_type_id,
 WITH value, r, c
 UNWIND value.neighborhood AS neighborhood
 MERGE (n:Neighborhood {name: neighborhood})
-MERGE (r)-[:IN]->(n)
-MERGE (n)-[:IN]->(c)
+MERGE (r)-[:Located_In]->(n)
+MERGE (n)-[:Located_In]->(c)
 RETURN count(r) AS Rental, count(n) AS Neighborhood, count(c) AS City;
 
 // insert Airbnb reviews and connect to listings
@@ -49,7 +49,7 @@ RETURN count(b) AS Review;
 // insert neighborhood topics from Airbnb reviews
 CALL apoc.load.json('FILE:///airbnb_review_topics.json')
 YIELD value
-MERGE (t:Topic {id: value.topic})
+MERGE (t:Topic:Rental {id: value.topic})
 SET t.words = value.words
 WITH value, t
 UNWIND value.neighborhood AS neighborhood
