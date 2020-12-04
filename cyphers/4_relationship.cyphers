@@ -22,7 +22,7 @@ WITH
 WHERE
     d < 1600
 CREATE
-    (a)-[r1:Is_Nearby {distance: d}]->(b)<-[r2:Is_Nearby {distance: d}]-(a)
+    (a)-[r1:Is_Nearby {distance: d}]->(b)-[r2:Is_Nearby {distance: d}]->(a)
 RETURN
     count(r1) as Restaurant_Attraction_distance_relationship;
 
@@ -36,7 +36,7 @@ WITH
 WHERE
     d < 1600
 CREATE
-    (a)-[r1:Is_Nearby {distance: d}]->(b)<-[r2:Is_Nearby {distance: d}]-(a)
+    (a)-[r1:Is_Nearby {distance: d}]->(b)-[r2:Is_Nearby {distance: d}]->(a)
 RETURN
     count(r1) as Restaurant_Hotel_distance_relationship;
 
@@ -50,7 +50,7 @@ WITH
 WHERE
     d < 1600
 CREATE
-    (a)-[r1:Is_Nearby {distance: d}]->(b)<-[r2:Is_Nearby {distance: d}]-(a)
+    (a)-[r1:Is_Nearby {distance: d}]->(b)-[r2:Is_Nearby {distance: d}]->(a)
 RETURN
     count(r1) as Restaurant_Airbnb_distance_relationship;
 
@@ -64,7 +64,7 @@ WITH
 WHERE
     d < 1600
 CREATE
-    (a)-[r1:Is_Nearby {distance: d}]->(b)<-[r2:Is_Nearby {distance: d}]-(a)
+    (a)-[r1:Is_Nearby {distance: d}]->(b)-[r2:Is_Nearby {distance: d}]->(a)
 RETURN
     count(r1) as Restaurant_Zillow_distance_relationship;
 
@@ -92,7 +92,7 @@ WITH
 WHERE
     d < 1600
 CREATE
-    (a)-[r1:Is_Nearby {distance: d}]->(b)<-[r2:Is_Nearby {distance: d}]-(a)
+    (a)-[r1:Is_Nearby {distance: d}]->(b)-[r2:Is_Nearby {distance: d}]->(a)
 RETURN
     count(r1) as Attraction_Hotel_distance_relationship;
 
@@ -106,7 +106,7 @@ WITH
 WHERE
     d < 1600
 CREATE
-    (a)-[r1:Is_Nearby {distance: d}]->(b)<-[r2:Is_Nearby {distance: d}]-(a)
+    (a)-[r1:Is_Nearby {distance: d}]->(b)-[r2:Is_Nearby {distance: d}]->(a)
 RETURN
     count(r1) as Attraction_Airbnb_distance_relationship;
 
@@ -120,7 +120,7 @@ WITH
 WHERE
     d < 1600
 CREATE
-    (a)-[r1:Is_Nearby {distance: d}]->(b)<-[r2:Is_Nearby {distance: d}]-(a)
+    (a)-[r1:Is_Nearby {distance: d}]->(b)-[r2:Is_Nearby {distance: d}]->(a)
 RETURN
     count(r1) as Attraction_Zillow_distance_relationship;
 
@@ -148,7 +148,7 @@ WITH
 WHERE
     d < 1600
 CREATE
-    (a)-[r1:Is_Nearby {distance: d}]->(b)<-[r2:Is_Nearby {distance: d}]-(a)
+    (a)-[r1:Is_Nearby {distance: d}]->(b)-[r2:Is_Nearby {distance: d}]->(a)
 RETURN
     count(r1) as Hotel_Airbnb_distance_relationship;
 
@@ -162,7 +162,7 @@ WITH
 WHERE
     d < 1600
 CREATE
-    (a)-[r1:Is_Nearby {distance: d}]->(b)<-[r2:Is_Nearby {distance: d}]-(a)
+    (a)-[r1:Is_Nearby {distance: d}]->(b)-[r2:Is_Nearby {distance: d}]->(a)
 RETURN
     count(r1) as Hotel_Zillow_distance_relationship;
 
@@ -190,7 +190,7 @@ WITH
 WHERE
     d < 1600
 CREATE
-    (a)-[r1:Is_Nearby {distance: d}]->(b)<-[r2:Is_Nearby {distance: d}]-(a)
+    (a)-[r1:Is_Nearby {distance: d}]->(b)-[r2:Is_Nearby {distance: d}]->(a)
 RETURN
     count(r1) as Airbnb_Zillow_distance_relationship;
 
