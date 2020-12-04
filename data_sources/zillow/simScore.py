@@ -266,11 +266,11 @@ def zillowAirbnbConnect(driver, zillow_props):
         airbnb_props = [APFG(r) for r in results]
 
     # Do all airbnb comparisons and add relationships
-    threshold = 0.985
+    threshold = 0.98
     connect_nodes(driver, combinations(airbnb_props, 2), threshold)
 
     # Do all zillow comparisons and add relationships
-    threshold = 0.975
+    threshold = 0.95
     connect_nodes(driver, product(zillow_props, airbnb_props), threshold)
 
     return airbnb_props
