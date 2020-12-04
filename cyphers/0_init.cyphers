@@ -1,5 +1,9 @@
 // Delete all nodes
-MATCH (n) DETACH DELETE n;
+// MATCH (n) DETACH DELETE n;
+// Delete in batches
+CALL apoc.periodic.iterate("MATCH (n) return n", "DETACH DELETE n", {batchSize:1000})
+YIELD batches, total
+RETURN batches, total;
 
 // Delete all constraints and indices
 DROP CONSTRAINT restaurant_yelp_id;
@@ -11,13 +15,17 @@ DROP CONSTRAINT attraction_google_id;
 DROP CONSTRAINT hotel_yelp_id;
 DROP CONSTRAINT hotel_google_id;
 
-DROP CONSTRAINT review_id;
-DROP INDEX review_yelp_id;
-DROP INDEX review_google_id;
-
 DROP CONSTRAINT rental_id;
 
 DROP CONSTRAINT property_id;
+
+DROP CONSTRAINT city_name;
+DROP CONSTRAINT neighborhood_name;
+DROP CONSTRAINT topic_id;
+
+DROP CONSTRAINT review_id;
+DROP INDEX review_yelp_id;
+DROP INDEX review_google_id;
 
 // Create constraints and indices
 CREATE CONSTRAINT restaurant_yelp_id ON (n:Restaurant) ASSERT n.yelp_id IS UNIQUE;
@@ -29,10 +37,14 @@ CREATE CONSTRAINT attraction_google_id ON (n:Attraction) ASSERT n.google_id IS U
 CREATE CONSTRAINT hotel_yelp_id ON (n:Hotel) ASSERT n.yelp_id IS UNIQUE;
 CREATE CONSTRAINT hotel_google_id ON (n:Hotel) ASSERT n.google_id IS UNIQUE;
 
-CREATE CONSTRAINT review_id ON (n:Review) ASSERT n.id IS UNIQUE;
-CREATE INDEX review_yelp_id FOR (n:Review) ON (n.yelp_id);
-CREATE INDEX review_google_id FOR (n:Review) ON (n.google_id);
-
 CREATE CONSTRAINT rental_id ON (n:Rental) ASSERT n.id IS UNIQUE;
 
 CREATE CONSTRAINT property_id ON (n:Property) ASSERT n.id IS UNIQUE;
+
+CREATE CONSTRAINT city_name ON (n:City) ASSERT n.name IS UNIQUE;
+CREATE CONSTRAINT neighborhood_name ON (n:Neighborhood) ASSERT n.name IS UNIQUE;
+CREATE CONSTRAINT topic_id ON (n:Topic) ASSERT n.id IS UNIQUE;
+
+CREATE CONSTRAINT review_id ON (n:Review) ASSERT n.id IS UNIQUE;
+CREATE INDEX review_yelp_id FOR (n:Review) ON (n.yelp_id);
+CREATE INDEX review_google_id FOR (n:Review) ON (n.google_id);

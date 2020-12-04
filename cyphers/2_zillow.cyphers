@@ -33,7 +33,7 @@ SET
     p.street = row.street,
     p.city = row.city,
     p.state = row.state,
-    p.zipcode = row.zipcode,
+    p.zip_code = row.zipcode,
     p.neighborhood = row.neighborhood,
     p.bed = row.bed,
     p.bath = row.bath,
@@ -42,8 +42,6 @@ SET
     p.description = row.description
 RETURN
     count(p) as Property;
-
-
 
 //
 // Unwind and LOAD CSV don't mix well so convert the string version of
@@ -74,6 +72,6 @@ MATCH
 WHERE
     n.name IN p.neighborhood
 CREATE
-    (p)-[r:In]->(n)
+    (p)-[r:Located_In]->(n)
 RETURN
     COUNT(r) AS In_relationship;
