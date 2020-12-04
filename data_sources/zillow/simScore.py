@@ -1,25 +1,21 @@
 #!/usr/bin/env python
-import os
-import sys
 import ast
-import json
-
-from pprint import pprint
+import datetime
+import os
+import time
+from abc import ABC, abstractmethod
+from itertools import combinations, product
 from string import digits
 
-from py_stringmatching import Cosine
-
 from neo4j import GraphDatabase
-
+from py_stringmatching import Cosine
+from tqdm import tqdm
 
 uri = 'bolt://localhost:7687'
 user = 'neo4j'
 pw = os.environ['NEO4JPW']
 
-airbnb_json = './../../data/airbnb_listings.json'
-
 cosine_sim = Cosine().get_sim_score
-
 
 # attributes that need to be converted from strings
 key_to_type = {
@@ -27,22 +23,7 @@ key_to_type = {
     'price': int,
     'size':  int,
     'bed':   float,
-    'bath':  float, # zillow doesn't seem to use 'half' bathrooms but we allow it.
-}
-
-# All airbnb attributes that we store.
-airbnb_attrs = [
-    'id',
-    'bed',
-    'bath',
-    'room_type_category',
-    'neighborhood',
-]
-
-# airbnb attributes that are named differently in zillow
-airbnb_to_zillow_keys = {
-    'bedrooms':  'bed',
-    'bathrooms': 'bath',
+    'bath':  float,  # zillow doesn't seem to use 'half' bathrooms but we allow it.
 }
 
 
@@ -55,6 +36,7 @@ def getobj(iterable, input_id):
     except:
         pass
     return None
+
 
 # Returns a value from 0 to 1 depending on how similar the numeric inputs
 # are to each other.
@@ -69,19 +51,17 @@ def getobj(iterable, input_id):
 # returned. 100,000 would be a perfect match and would return 1.
 #
 def num_sim(base_val, comp_val, ratio):
-    diff = min(abs(base_val - comp_val) / ((base_val+comp_val)/2), ratio)
+    diff = min(abs(base_val - comp_val) / ((base_val + comp_val) / 2), ratio)
     return (ratio - diff) / ratio
 
-# zillow property from graph
-class ZPFG:
+
+class PropertyContainer(ABC):
     def __init__(self, info):
-        self.scores = {}    # track zillow vs zillow comparisons
-        self.bnbscores = {} # track zillow vs airbnb comparisons
         self.print_keys = []
 
         for k, v in info.items():
-            # ex: 'p.price'
-            actual_key = k.split('.')[1]
+            # Convert neo4j string to something we want to use ex: 'p.price' -> 'price'
+            actual_key = k.split('.')[1] if '.' in k else k
             self.print_keys.append(actual_key)
 
             if actual_key in key_to_type:
@@ -95,9 +75,6 @@ class ZPFG:
             else:
                 self[actual_key] = v
 
-        # Remove digits from street
-        self.stripped_street = self.street.translate({ord(d): None for d in digits})
-
         # Convert neighborhood to set
         try:
             self.neighborhood_set = set(self.neighborhood)
@@ -113,170 +90,203 @@ class ZPFG:
     def __setitem__(self, key, value):
         return self.__setattr__(key, value)
 
+    @abstractmethod
+    def compare(self, other):
+        pass
+
+
+# zillow property from graph
+class ZPFG(PropertyContainer):
+    data_source = 'zillow'
+    node_name = 'Property'
+
+    def __init__(self, info):
+        super().__init__(info)
+
+        # Remove digits from street
+        self.stripped_street = self.street.translate({ord(d): None for d in digits})
+
+    def compare(self, other):
+        if isinstance(other, ZPFG):
+            return self.zillowCompare(other)
+        else:
+            return self.airbnbCompare(other)
+
     # This is called in an NxN fashion but only ~half of the of calls will do
     # anything since comparisons are symmetric.
     def zillowCompare(self, other):
-        # Check if zillowCompare(other, self) was already called
-        if self.id == other.id or self.id in other.scores:
-            return
-
         score = 0
 
         # Price is most important factor; it sums up other attributes.
         if all((self.price, other.price)):
-            score += .5 * num_sim(self.price, other.price, .3)
+            score += 0.5 * num_sim(self.price, other.price, 0.3)
 
         # Comparing addresses is the most costly comparison and is therefore
         # currently designed for simplicity and speed.
         #
         # Possible modifications could be done here given more time:
         # - Since street names aren't unique, we could validate using gps coordinates
-        # - Use some sort of edit distance to compare street names in a more robust fashion
+        # - Use an edit distance metric to compare street names in a more robust fashion
         # - Make the comparison aware of abbreviations such as 'street' -> 'st' or
         #   'avenue' -> 'ave'.
         if self.stripped_street == other.stripped_street:
-            score += .2
+            score += 0.2
 
         # Compare beds and baths
         if all((self.bed, other.bed)):
-            score += .1 * num_sim(self.bed,  other.bed,  .5)
+            score += 0.1 * num_sim(self.bed, other.bed, 0.5)
+
         if all((self.bath, other.bath)):
-            score += .1 * num_sim(self.bath, other.bath, .5)
+            score += 0.1 * num_sim(self.bath, other.bath, 0.5)
 
         # Compare square footage
         if all((self.size, other.size)):
-            score += .1 * num_sim(self.size, other.size, .3)
+            score += 0.1 * num_sim(self.size, other.size, 0.3)
 
-        self.scores[other.id] = score
+        return score
 
     def airbnbCompare(self, other):
         score = 0
 
         # Compare beds and baths
         if all((self.bed, other.bed)):
-            score += 1/3 * num_sim(self.bed,  other.bed,  .5)
+            score += 1 / 3 * num_sim(self.bed, other.bed, 0.5)
 
         if all((self.bath, other.bath)):
-            score += 1/3 * num_sim(self.bath, other.bath, .5)
+            score += 1 / 3 * num_sim(self.bath, other.bath, 0.5)
 
         # Compare neighborhoods
-        score += 1/3 * cosine_sim(self.neighborhood_set, other.neighborhood_set)
+        score += 1 / 3 * cosine_sim(self.neighborhood_set, other.neighborhood_set)
 
-        self.bnbscores[other.id] = score
+        return score
+
 
 # Container for airbnb data
-class APFJ():
-    def __init__(self, info):
-        self.print_keys = []
+class APFG(PropertyContainer):
+    data_source = 'airbnb'
+    node_name = 'Rental'
 
-        for k, v in info.items():
-            # Convert neo4j string to something we want to use ex: 'p.price' -> 'price'
-            actual_key = k.split('.')[1]
+    def compare(self, other):
+        if isinstance(other, APFG):
+            return self.airbnbCompare(other)
+        else:
+            return other.airbnbCompare(self)
 
-            # Convert airbnb key names to zillow key names (if needed).
-            if actual_key in airbnb_to_zillow_keys:
-                actual_key = airbnb_to_zillow_keys[actual_key]
+    def airbnbCompare(self, other):
+        score = 0
 
-            self.print_keys.append(actual_key)
+        # Compare beds and baths
+        if all((self.bed, other.bed)):
+            score += 0.25 * num_sim(self.bed, other.bed, 0.5)
 
-            if actual_key in key_to_type:
-                if v is None:
-                    self[actual_key] = None
-                else:
-                    self[actual_key] = key_to_type[actual_key](v)
-            else:
-                self[actual_key] = v
+        if all((self.bath, other.bath)):
+            score += 0.25 * num_sim(self.bath, other.bath, 0.5)
 
-        # Convert neighborhood to set
-        try:
-            self.neighborhood_set = set(self.neighborhood)
-        except TypeError:
-            self.neighborhood_set = set()
+        # Compare neighborhoods or city
+        if len(self.neighborhood_set) > 0 and len(other.neighborhood_set) > 0:
+            score += 0.3 * cosine_sim(self.neighborhood_set, other.neighborhood_set)
+        elif self.city == other.city:
+            score += 0.3
 
-    def __str__(self):
-        return f'{dict(((k, self[k]) for k in self.print_keys))}'
+        # Compare property type
+        if self.type_id == other.type_id:
+            score += 0.1
 
-    def __getitem__(self, key):
-        return self.__getattribute__(key)
+        # Compare amenity IDs
+        score += 0.05 * cosine_sim(self.amenity_ids, other.amenity_ids)
 
-    def __setitem__(self, key, value):
-        return self.__setattr__(key, value)
+        # Compare amenity names (subset of amenity IDs)
+        score += 0.05 * cosine_sim(self.amenity_names, other.amenity_names)
+
+        return score
+
+
+# Link similar properties together in the db.
+#
+# Note that Neo4j does not support creating undirected edges. Therefore we
+# end up creating both incoming and outgoing (directed) relationships between
+# "similar" nodes.
+def connect_nodes(driver, pairs, threshold):
+    pairs = list(pairs)
+    relation = f'{pairs[0][0].data_source} <--> {pairs[0][1].data_source} relationships'
+    count = 0
+
+    print(f'Creating {relation}')
+
+    with driver.session() as session:
+        for p1, p2 in tqdm(pairs):
+            score = p1.compare(p2)  # compare properties
+
+            # create relationship
+            if score >= threshold:
+                is_similar = f'[:Is_Similar {{score: {score}}}]'
+                query = f'''MATCH (n1:{p1.node_name}), (n2:{p2.node_name})
+                            WHERE n1.id = '{p1.id}' AND n2.id = {p2.id}
+                            CREATE (n1)-{is_similar}->(n2), (n2)-{is_similar}->(n1)'''
+                _ = session.run(query)
+                count += 2
+
+    total = len(pairs)
+    pct = count / total * 100
+    print(f'{count} new {relation} (total={total}, {pct:.2f}%)')
 
 
 def zillowZillowConnect(driver):
     # Get data from db
+    print('Fetching zillow data')
+
     with driver.session() as session:
-        query  = 'MATCH (p:Property) '
-        query += 'RETURN p.id, p.price, p.street, p.size, p.bed, p.bath, p.neighborhood '
+        query = '''
+            MATCH (p:Property)
+            RETURN p.id, p.price, p.street, p.size, p.bed, p.bath, p.neighborhood
+        '''
         results = session.run(query)
         zillow_props = [ZPFG(r) for r in results]
-    
-    # Do all comparisons
-    for prop1 in zillow_props:
-        for prop2 in zillow_props:
-            prop1.zillowCompare(prop2)
 
-    all_ids = [o.id for o in zillow_props] # make one copy
+    # Do all comparisons and add relationships
+    threshold = 0.7
+    connect_nodes(driver, combinations(zillow_props, 2), threshold)
 
-    threshold = .70
-
-    # Link similar properties together in the db.
-    #
-    # Note that Neo4j does not support creating undirected edges. Therefore we
-    # end up creating both incoming and outgoing (directed) relationships between
-    # "similar" nodes.
-    with driver.session() as session:
-        count = 0
-
-        # This could be removed if the CREATE is MERGE below, but I believe that
-        # would be slower.
-        query = 'MATCH ()-[r:Is_Similar]-() DELETE r;'
-        _ = session.run(query)
-
-        for prop in zillow_props:
-            for id in all_ids:
-                if id in prop.scores and prop.scores[id] > threshold:
-                    query = f'''MATCH (p1:Property), (p2:Property) 
-                                WHERE p1.id = '{prop.id}' AND p2.id = '{id}' 
-                                CREATE (p1)-[:Is_Similar]->(p2), (p2)-[:Is_Similar]->(p1)'''
-                    results = session.run(query)
-                    count += 2
-
-        print(f'{count} new zillow <--> zillow Is_Similar relationships.')
     return zillow_props
+
 
 def zillowAirbnbConnect(driver, zillow_props):
     # Get data from db
+    print('Fetching airbnb data')
+
     with driver.session() as session:
-        query  = 'MATCH (r:Rental) '
-        query += 'RETURN r.id, r.bedrooms, r.bathrooms, r.room_type_category, r.neighborhood '
+        query = '''
+            MATCH (r:Rental)-[:Located_In]->(c:City)
+            OPTIONAL MATCH (r)-[:Located_In]->(n:Neighborhood)
+            RETURN r.id, r.bed, r.bath, r.type_id, r.amenity_ids, r.amenity_names,
+                    c.name AS city,
+                    collect(r.neighborhood) AS neighborhood
+        '''
         results = session.run(query)
-        airbnb_props = [APFJ(r) for r in results]
+        airbnb_props = [APFG(r) for r in results]
 
-    # Do all comparisons
-    for z_prop in zillow_props:
-        for a_prop in airbnb_props:
-            z_prop.airbnbCompare(a_prop)
+    # Do all airbnb comparisons and add relationships
+    threshold = 0.985
+    connect_nodes(driver, combinations(airbnb_props, 2), threshold)
 
-    count = 0
-    threshold = .85
+    # Do all zillow comparisons and add relationships
+    threshold = 0.975
+    connect_nodes(driver, product(zillow_props, airbnb_props), threshold)
 
-    with driver.session() as session:
-        for z_prop in zillow_props:
-            for a_prop in airbnb_props:
-                if z_prop.bnbscores[a_prop.id] > threshold:
-                    query = f'''MATCH (p:Property), (r:Rental) 
-                                WHERE p.id = '{z_prop.id}' AND r.id = {a_prop.id} 
-                                CREATE (p)-[:Is_Similar]->(r), (r)-[:Is_Similar]->(p)'''
-                    results = session.run(query)
-                    count += 2
-
-    total = len(zillow_props) * len(airbnb_props)
-    print(f'{count} new zillow <--> airbnb Is_Similar relationships. (total={total})')
-    
     return airbnb_props
 
+
 if __name__ == '__main__':
+    start = time.time()
     driver = GraphDatabase.driver(uri, auth=(user, pw))
+
+    # This could be removed if MERGE is used instead of CREATE, but I believe that
+    # would be slower.
+    with driver.session() as session:
+        query = 'MATCH ()-[r:Is_Similar]-() DELETE r;'
+        _ = session.run(query)
+
     zillow_props = zillowZillowConnect(driver)
     airbnb_props = zillowAirbnbConnect(driver, zillow_props)
+
+    print(f'\nElapsed time: {datetime.timedelta(seconds=time.time()-start)}')
