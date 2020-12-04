@@ -208,9 +208,10 @@ RETURN
 CALL apoc.load.json('FILE:///restaurant_review_topics.json')
 YIELD value
 MERGE
-    (t:Topic:Restaurant {id: value.topic + 100})
+    (t:Topic {id: value.topic + 100})
 SET
     t.words = value.words
+    t.type = 'restaurant'
 WITH
     value, t
 UNWIND
