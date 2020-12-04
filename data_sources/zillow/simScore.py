@@ -224,7 +224,7 @@ def connect_nodes(driver, pairs, threshold):
             if score >= threshold:
                 is_similar = f'[:Is_Similar {{score: {score}}}]'
                 query = f'''MATCH (n1:{p1.node_name}), (n2:{p2.node_name})
-                            WHERE n1.id = '{p1.id}' AND n2.id = {p2.id}
+                            WHERE n1.id = {p1.id} AND n2.id = {p2.id}
                             CREATE (n1)-{is_similar}->(n2), (n2)-{is_similar}->(n1)'''
                 _ = session.run(query)
                 count += 2
