@@ -28,7 +28,7 @@ RETURN
 LOAD CSV WITH HEADERS
 FROM 'FILE:///zillow_properties.csv' AS row
 MATCH (p:Property), (c:City)
-WHERE p.id = row.id AND c.name = row.city
+WHERE p.id = toInteger(row.id) AND c.name = row.city
 //
 // Neighborhood nodes
 //
