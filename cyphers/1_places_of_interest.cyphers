@@ -131,7 +131,7 @@ MERGE
     (r)-[e1:Located_In]->(c)
 RETURN
     count(r) as Attraction_Yelp,
-    count(c) as City_Yelp,
+    count(distinct c) as City_Yelp,
     count(e1) as In_relationship_1;
 
 // ----------------------------------------------
@@ -163,7 +163,7 @@ MERGE
     (r)-[e1:Located_In]->(c)
 RETURN
     count(r) as Hotel_Yelp,
-    count(c) as City_Yelp,
+    count(distinct c) as City_Yelp,
     count(e1) as In_relationship_1;
 
 // ----------------------------------------------
@@ -208,9 +208,10 @@ RETURN
 CALL apoc.load.json('FILE:///restaurant_review_topics.json')
 YIELD value
 MERGE
-    (t:Topic:Restaurant {id: value.topic + 100})
+    (t:Topic {id: value.topic + 100})
 SET
-    t.words = value.words
+    t.words = value.words,
+    t.type = 'restaurant'
 WITH
     value, t
 UNWIND
@@ -222,7 +223,7 @@ WHERE
 MERGE
     (n)-[r:Has_Topic]->(t)
 RETURN
-    count(t) AS Topic, count(r) AS TopicConnection;
+    count(distinct t) AS Topic, count(r) AS TopicConnection;
 
 // ----------------------------------------------
 // Insert attraction review nodes with Yelp data

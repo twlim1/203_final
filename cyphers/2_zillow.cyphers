@@ -1,9 +1,34 @@
 //
+// Open file for property and city nodes
+//
+LOAD CSV WITH HEADERS
+FROM 'FILE:///zillow_properties.csv' AS row
+MERGE (p:Property {id: toInteger(row.id)})
+MERGE (c:City {name: row.city})
+MERGE (p)-[:Located_In]->(c)
+SET
+    p.price = toInteger(row.price),
+    p.url = row.url,
+    p.coordinate = point({longitude: toFloat(row.longitude), latitude: toFloat(row.latitude)}),
+    p.street = row.street,
+    p.state = row.state,
+    p.zip_code = toInteger(row.zipcode),
+    p.bed = toInteger(row.bed),
+    p.bath = toFloat(row.bath),
+    p.year_built = toInteger(row.year_built),
+    p.size = toInteger(row.size),
+    p.description = row.description
+RETURN
+    count(p) AS Zillow_Property,
+    count(distinct c) AS Zillow_City;
+
+//
 // Open file for neighborhood nodes
 //
 LOAD CSV WITH HEADERS
 FROM 'FILE:///zillow_properties.csv' AS row
-
+MATCH (p:Property), (c:City)
+WHERE p.id = toInteger(row.id) AND c.name = row.city
 //
 // Neighborhood nodes
 //
@@ -12,66 +37,10 @@ FROM 'FILE:///zillow_properties.csv' AS row
 // The goal below is to convert string to list as well as trim quotes and
 // whitespace from the inner neighborhood names.
 //
-UNWIND split(substring(row.neighborhood, 1, size(row.neighborhood)-2), ',') as neighborhood
-MERGE (n:Neighborhood {name: replace(trim(neighborhood), "'", "")});
-
-//
-// Open file again
-//
-LOAD CSV WITH HEADERS
-FROM 'FILE:///zillow_properties.csv' AS row
-
-//
-// Property nodes
-//
-MERGE
-    (p:Property {id: row.id})
-SET
-    p.price = row.price,
-    p.url = row.url,
-    p.coordinate = point({longitude: toFloat(row.longitude), latitude: toFloat(row.latitude)}),
-    p.street = row.street,
-    p.city = row.city,
-    p.state = row.state,
-    p.zip_code = row.zipcode,
-    p.neighborhood = row.neighborhood,
-    p.bed = row.bed,
-    p.bath = row.bath,
-    p.year_build = row.year_build,
-    p.size = row.size,
-    p.description = row.description
+UNWIND split(substring(row.neighborhood, 1, size(row.neighborhood)-2), ',') AS neighborhood
+MERGE (n:Neighborhood {name: replace(trim(neighborhood), "'", "")})
+MERGE (p)-[:Located_In]->(n)
+MERGE (n)-[:Located_In]->(c)
 RETURN
-    count(p) as Property;
-
-//
-// Unwind and LOAD CSV don't mix well so convert the string version of
-// 'neighborhood' to a list here.
-//
-// Example neighborhood string: "['Smart Corner', 'East Village']"
-//
-MATCH
-    (p:Property)
-WHERE
-    p.neighborhood IS NOT NULL
-SET
-    p.neighborhood
-        =
-    SPLIT(REPLACE(REPLACE(REPLACE(p.neighborhood, '[', ''),
-                                                  ']', ''),
-                                                  "'", ''),
-    ', ')
-RETURN
-    count(p) as numFixedNeighborhoods
-;
-
-//
-// Connect "In" relationships
-//
-MATCH
-    (p:Property), (n:Neighborhood)
-WHERE
-    n.name IN p.neighborhood
-CREATE
-    (p)-[r:Located_In]->(n)
-RETURN
-    COUNT(r) AS In_relationship;
+    count(distinct n) AS Zillow_Neighborhood,
+    count(n) AS Zillow_Neighborhood_Relationship;

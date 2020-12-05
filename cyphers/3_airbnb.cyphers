@@ -18,8 +18,10 @@ SET r.type_id = value.property_type_id,
     r.space_type = value.space_type,
     r.amenity_names = value.preview_amenity_names,
     r.amenity_ids = value.amenity_ids,
-    r.price = value.rate
-RETURN count(r) AS Airbnb_Rental;
+    r.price = toInteger(value.rate)
+RETURN
+    count(r) AS Airbnb_Rental,
+    count(distinct c) AS Airbnb_City;
 
 // ----------------------------------------------
 // connect Airbnb listings to neighborhoods
@@ -32,7 +34,9 @@ UNWIND value.neighborhood AS neighborhood
 MERGE (n:Neighborhood {name: neighborhood})
 MERGE (r)-[:Located_In]->(n)
 MERGE (n)-[:Located_In]->(c)
-RETURN count(n) AS Airbnb_Neighborhood;
+RETURN
+    count(distinct n) AS Airbnb_Neighborhood,
+    count(n) AS Airbnb_Neighborhood_Relationship;
 
 // ----------------------------------------------
 // insert Airbnb reviews and connect to listings
@@ -57,19 +61,16 @@ RETURN count(b) AS Airbnb_Review;
 // ----------------------------------------------
 CALL apoc.load.json('FILE:///airbnb_review_topics.json')
 YIELD value
-MERGE (t:Topic:Rental {id: value.topic})
-SET t.words = value.words
-RETURN count(t) AS Airbnb_Topic;
-
-// ----------------------------------------------
-// connect Airbnb review topics to neighborhoods
-// ----------------------------------------------
-CALL apoc.load.json('FILE:///airbnb_review_topics.json')
-YIELD value
+MERGE (t:Topic {id: value.topic})
+SET t.words = value.words,
+    t.type = 'rental'
+WITH value, t
 UNWIND value.neighborhood AS neighborhood
-MATCH (n:Neighborhood), (t:Topic)
-WHERE n.name = neighborhood AND t.id = value.topic
+MATCH (n:Neighborhood)
+WHERE n.name = neighborhood
 MERGE (n)-[r:Has_Topic]->(t)
-RETURN count(r) AS Neighborhood_Topic_Relationship;
+RETURN
+    count(distinct t) AS Airbnb_Topic,
+    count(r) AS Airbnb_Topic_Relationship;
 
 // ----------------------------------------------

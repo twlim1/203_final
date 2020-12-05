@@ -155,8 +155,11 @@ class ZPFG(PropertyContainer):
         if all((self.bath, other.bath)):
             score += 1 / 3 * num_sim(self.bath, other.bath, 0.5)
 
-        # Compare neighborhoods
-        score += 1 / 3 * cosine_sim(self.neighborhood_set, other.neighborhood_set)
+        # Compare neighborhoods or city
+        if len(self.neighborhood_set) > 0 and len(other.neighborhood_set) > 0:
+            score += 1 / 3 * cosine_sim(self.neighborhood_set, other.neighborhood_set)
+        elif self.city == other.city:
+            score += 1 / 3
 
         return score
 
@@ -221,7 +224,7 @@ def connect_nodes(driver, pairs, threshold):
             if score >= threshold:
                 is_similar = f'[:Is_Similar {{score: {score}}}]'
                 query = f'''MATCH (n1:{p1.node_name}), (n2:{p2.node_name})
-                            WHERE n1.id = '{p1.id}' AND n2.id = {p2.id}
+                            WHERE n1.id = {p1.id} AND n2.id = {p2.id}
                             CREATE (n1)-{is_similar}->(n2), (n2)-{is_similar}->(n1)'''
                 _ = session.run(query)
                 count += 2
@@ -237,8 +240,11 @@ def zillowZillowConnect(driver):
 
     with driver.session() as session:
         query = '''
-            MATCH (p:Property)
-            RETURN p.id, p.price, p.street, p.size, p.bed, p.bath, p.neighborhood
+            MATCH (p:Property)-[:Located_In]->(c:City)
+            OPTIONAL MATCH (p)-[:Located_In]->(n:Neighborhood)
+            RETURN p.id, p.price, p.street, p.size, p.bed, p.bath,
+                    c.name AS city,
+                    collect(n.name) AS neighborhood
         '''
         results = session.run(query)
         zillow_props = [ZPFG(r) for r in results]
@@ -260,17 +266,17 @@ def zillowAirbnbConnect(driver, zillow_props):
             OPTIONAL MATCH (r)-[:Located_In]->(n:Neighborhood)
             RETURN r.id, r.bed, r.bath, r.type_id, r.amenity_ids, r.amenity_names,
                     c.name AS city,
-                    collect(r.neighborhood) AS neighborhood
+                    collect(n.name) AS neighborhood
         '''
         results = session.run(query)
         airbnb_props = [APFG(r) for r in results]
 
     # Do all airbnb comparisons and add relationships
-    threshold = 0.985
+    threshold = 0.98
     connect_nodes(driver, combinations(airbnb_props, 2), threshold)
 
     # Do all zillow comparisons and add relationships
-    threshold = 0.975
+    threshold = 0.95
     connect_nodes(driver, product(zillow_props, airbnb_props), threshold)
 
     return airbnb_props

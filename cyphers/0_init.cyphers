@@ -6,26 +6,26 @@ YIELD batches, total
 RETURN batches, total;
 
 // Delete all constraints and indices
-DROP CONSTRAINT restaurant_yelp_id;
-DROP CONSTRAINT restaurant_google_id;
+DROP CONSTRAINT restaurant_yelp_id IF EXISTS;
+DROP CONSTRAINT restaurant_google_id IF EXISTS;
 
-DROP CONSTRAINT attraction_yelp_id;
-DROP CONSTRAINT attraction_google_id;
+DROP CONSTRAINT attraction_yelp_id IF EXISTS;
+DROP CONSTRAINT attraction_google_id IF EXISTS;
 
-DROP CONSTRAINT hotel_yelp_id;
-DROP CONSTRAINT hotel_google_id;
+DROP CONSTRAINT hotel_yelp_id IF EXISTS;
+DROP CONSTRAINT hotel_google_id IF EXISTS;
 
-DROP CONSTRAINT rental_id;
+DROP CONSTRAINT rental_id IF EXISTS;
 
-DROP CONSTRAINT property_id;
+DROP CONSTRAINT property_id IF EXISTS;
 
-DROP CONSTRAINT city_name;
-DROP CONSTRAINT neighborhood_name;
-DROP CONSTRAINT topic_id;
+DROP CONSTRAINT city_name IF EXISTS;
+DROP CONSTRAINT neighborhood_name IF EXISTS;
+DROP CONSTRAINT topic_id IF EXISTS;
 
-DROP CONSTRAINT review_id;
-DROP INDEX review_yelp_id;
-DROP INDEX review_google_id;
+DROP CONSTRAINT review_id IF EXISTS;
+DROP INDEX review_yelp_id IF EXISTS;
+DROP INDEX review_google_id IF EXISTS;
 
 // Create constraints and indices
 CREATE CONSTRAINT restaurant_yelp_id ON (n:Restaurant) ASSERT n.yelp_id IS UNIQUE;
