@@ -28,3 +28,7 @@ sh ./cyphers/run_cyphers.sh
 2. Clone contents of Yelp API python repo to ./data_sources/yelp/
 
 [Yelp API python](https://github.com/gfairchild/yelpapi)
+
+## Presentation slide deck
+
+1. Available [here](Presentation_slide.pptx)
