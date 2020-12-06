@@ -31,4 +31,4 @@ sh ./cyphers/run_cyphers.sh
 
 ## Presentation slide deck
 
-1. Available [here](Presentation_slide.pptx)
+1. Do git clone to download the slide deck and code
