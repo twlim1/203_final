@@ -1,4 +1,14 @@
-# 203_final
+# DSE203_final
+
+## Project Objective
+
+1. Associate places of interest with short-term rental properties to identify profitable real estate investments in San Diego County
+
+2. Construct knowledge graph connecting real estate listings with similar short-term rental properties and nearby places of interest
+
+3. Connect places and reviews to neighborhoods
+
+4. Process review text to find themes associated with neighborhoods
 
 ## How to load data into local Neo4J
 
